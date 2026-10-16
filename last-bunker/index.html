@@ -1,7 +1,5 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>Last Bunker</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Russo+One&family=Rubik:wght@400;500;700;800&display=swap" media="print" onload="this.media=\'all\'">
 <style>
 /* Layout: one-screen arcade. 16:9 canvas; glass HUD chips in the corners; round thumb-sized action buttons bottom-right. Single vivid daylight look on purpose. */
 :root{
@@ -20,8 +18,8 @@ canvas{display:block;width:100%;height:100%;cursor:none}
 .chip{position:absolute;background:var(--glass);border:1px solid var(--glass-line);border-radius:1.1em;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 .4em 1.4em rgba(0,0,0,.25);padding:.6em .85em}
 #tl{left:1.4%;top:2.4%;display:flex;flex-direction:column;gap:.35em;width:15em}
 #tc{left:50%;top:2.4%;transform:translateX(-50%);display:flex;flex-direction:column;gap:.3em;align-items:center;width:17em;text-align:center}
-#bl{left:1.4%;bottom:2.6%;display:flex;flex-direction:column;gap:.4em;width:14em;pointer-events:auto}
-.acts{position:absolute;right:1.4%;bottom:2.6%;display:flex;gap:.9em;align-items:flex-end;pointer-events:auto;padding-bottom:1.5em}
+#bl{right:1.4%;top:calc(2.4% + 4em);display:flex;flex-direction:column;gap:.4em;width:14em;pointer-events:auto}
+.acts{position:absolute;left:1.4%;bottom:2.6%;display:flex;gap:.9em;align-items:flex-end;pointer-events:auto;padding-bottom:1.5em}
 #vl{left:1.4%;top:2.4%;width:15em;display:flex;flex-direction:column;gap:.35em}
 #vhpbar{height:.9em}#vhpbar>i{background:linear-gradient(90deg,#22c96e,#9bff6a)}#vhpbar.low>i{background:linear-gradient(90deg,#ff3d5a,#ff9a3d)}
 #heatbar>i{background:linear-gradient(90deg,#36b9ff,#ff8a3d)}#heatbar.over>i{background:#ff4d5e}
@@ -32,6 +30,7 @@ canvas{display:block;width:100%;height:100%;cursor:none}
 #obj li.done{color:var(--muted);text-decoration:line-through}
 #obj li.done::before{background:var(--green);border-color:var(--green)}
 #obj li.lock{color:var(--muted)}#obj li.lock::before{border-color:#a86bff}
+#br2{bottom:auto;top:24%;flex-direction:column;align-items:center;gap:2em}
 #canBtn2{--c:var(--orange)} #misBtn2{--c:var(--pink)}
 .chapters{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .chap{background:rgba(255,255,255,.06);border:1px solid var(--glass-line);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:6px;align-items:center;min-width:0}
@@ -207,6 +206,12 @@ button:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
 
 <script>
 (()=>{
+try{const l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family=Russo+One&family=Rubik:wght@400;500;700;800&display=swap';document.head.appendChild(l)}catch(e){}
+// older phone browsers lack roundRect
+if(!CanvasRenderingContext2D.prototype.roundRect)CanvasRenderingContext2D.prototype.roundRect=function(x,y,w,h,r){r=Math.max(0,Math.min(typeof r==='number'?r:0,Math.abs(w)/2,Math.abs(h)/2));this.moveTo(x+r,y);this.arcTo(x+w,y,x+w,y+h,r);this.arcTo(x+w,y+h,x,y+h,r);this.arcTo(x,y+h,x,y,r);this.arcTo(x,y,x+w,y,r);this.closePath();return this};
+let errShown=false;
+function showErr(e){if(errShown)return;errShown=true;const d=document.createElement('div');d.style.cssText='position:fixed;left:12px;right:12px;bottom:12px;z-index:99;background:#7a1830;color:#fff;font:13px system-ui;padding:10px 12px;border-radius:10px';d.textContent='Game error: '+(e&&e.message||e);document.body.appendChild(d)}
+addEventListener('error',ev=>showErr(ev.error||ev.message));
 const $=id=>document.getElementById(id);
 const cv=$('c'),ctx=cv.getContext('2d');
 const W=960,H=540,BK={x:112,y:270,r:42};
@@ -914,7 +919,7 @@ function startAssault(){
   mode=2;S.running=false;
   const mk=(k,x,y)=>{const t=E2[k];return{k,...t,x,y,hp:t.hp,max:t.hp,armor:t.armor||0,ang:Math.PI,step:rnd(0,6),hit:0,atk:rnd(.5,1.5),sway:rnd(0,6),seed:rnd(0,6),rot:0,awake:false}};
   A={running:true,paused:false,time:0,kills:0,credits:0,cam:0,shake:0,flash:0,hurt:0,
-    p:{x:170,y:270,r:PV.r,hp:PV.hp,ang:0,tur:0,tread:0},
+    p:{x:260,y:270,r:PV.r,hp:PV.hp,ang:0,tur:0,tread:0},
     aimS:{x:520,y:270},aim:{x:520,y:270},firing:false,heat:0,over:0,cool:0,canT:0,misT:0,recoil:0,muzzle:0,stick:null,
     walls:MAP2.walls.map(([x,y,w,h,t])=>({x,y,w,h,t})),
     structs:[...MAP2.towers.map(([x,y])=>({kind:'tower',x,y,r:22,hp:60,max:60,armor:2,tur:Math.PI,atk:1,range:380,hit:0,awake:false,side:1})),
@@ -1282,7 +1287,7 @@ function drawMinimap(){
 }
 function drawStick(){
   if(!isTouch&&!A.stick)return;
-  const s=A.stick||{ox:120,oy:H-110,x:120,y:H-110};
+  const s=A.stick||{ox:240,oy:H-100,x:240,y:H-100};
   ctx.globalAlpha=A.stick?.9:.35;ctx.strokeStyle='rgba(255,255,255,.7)';ctx.lineWidth=3;circ(s.ox,s.oy,50,'rgba(12,20,40,.35)',true);
   const dx=s.x-s.ox,dy=s.y-s.oy,l=Math.hypot(dx,dy),m=Math.min(l,50),kx=l?s.ox+dx/l*m:s.ox,ky=l?s.oy+dy/l*m:s.oy;
   circ(kx,ky,22,'rgba(54,185,255,.85)');
@@ -1293,7 +1298,7 @@ function drawStick(){
 // ---------- chapter 2 input ----------
 const ptr={stick:null,aim:null};
 cv.addEventListener('pointerdown',ev=>{if(mode!==2||!A.running||A.paused||A.result)return;const q=toGame(ev);
-  if(ev.pointerType==='touch'&&q.x<W*.42&&ptr.stick===null){ptr.stick=ev.pointerId;A.stick={ox:q.x,oy:q.y,x:q.x,y:q.y}}
+  if(ev.pointerType==='touch'&&q.x<W*.45&&ptr.stick===null){ptr.stick=ev.pointerId;A.stick={ox:q.x,oy:q.y,x:q.x,y:q.y}}
   else{ptr.aim=ev.pointerId;A.aimS=q;A.firing=true}
   try{cv.setPointerCapture(ev.pointerId)}catch(e){}});
 cv.addEventListener('pointermove',ev=>{if(mode!==2)return;const q=toGame(ev);
@@ -1317,10 +1322,12 @@ $('assaultBtn').onclick=startAssault;$('replay2').onclick=startAssault;$('retry2
 reset();S.running=false;S.waveLeft=0;toastQ=[];$('toast').classList.remove('show');/*DBG*/
 let last=performance.now();
 function loop(t){
+  requestAnimationFrame(loop);
+  try{
   const dt=Math.min(.05,(t-last)/1000);last=t;now=t;
   if(mode===2){if(A.running&&!A.paused)update2(dt);draw2()}
   else{if(live())update(dt);draw()}
-  requestAnimationFrame(loop);
+  }catch(e){showErr(e)}
 }
 requestAnimationFrame(loop);
 })();
