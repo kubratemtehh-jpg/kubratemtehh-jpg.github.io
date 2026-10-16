@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#121019">
+<title>بازی‌ها · Games</title>
+<meta name="description" content="Genesis, Last Bunker, Tower to the Moon — play in the browser, no sign-in.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lalezar&family=Vazirmatn:wght@400;500;700&family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&display=swap" media="print" onload="this.media='all'">
+<style>
+/* Layout: a shelf of three game cartridges. Each card wears its own game's palette; the shelf itself stays a quiet night. */
+:root{
+  --bg:#121019; --bg2:#1a1724; --ink:#f1ecf7; --dim:#a8a0bb; --line:rgba(241,236,247,.12);
+  --accent:#f2b84b;
+  --f-fa:'Vazirmatn',Tahoma,system-ui,sans-serif;
+  --f-fa-d:'Lalezar','Vazirmatn',Tahoma,system-ui,sans-serif;
+  --f-en:'Vazirmatn',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-en-d:'Bricolage Grotesque','Arial Black',system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink)}
+body{font-family:var(--f-fa);min-height:100vh;padding:calc(env(safe-area-inset-top,0px) + 20px) 16px calc(env(safe-area-inset-bottom,0px) + 32px);
+  background:radial-gradient(1200px 600px at 50% -10%,#241d36 0%,transparent 60%),var(--bg)}
+html[lang=en] body{font-family:var(--f-en)}
+.wrap{max-width:1080px;margin:0 auto;display:grid;gap:28px}
+header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
+h1{margin:0;font-family:var(--f-fa-d);font-weight:400;font-size:clamp(40px,9vw,68px);line-height:1;letter-spacing:0}
+html[lang=en] h1{font-family:var(--f-en-d);font-weight:800;letter-spacing:-.02em}
+.lede{margin:8px 0 0;color:var(--dim);font-size:15px;line-height:1.8;max-width:42ch}
+.seg{display:flex;border:1px solid var(--line);border-radius:999px;padding:3px;gap:3px;direction:ltr}
+.seg button{font:500 14px var(--f-fa);color:var(--ink);background:none;border:0;border-radius:999px;padding:7px 14px;cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--ink);color:var(--bg);font-weight:700}
+button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.shelf{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:18px}
+.game{--c1:#333;--c2:#555;--on:#fff;background:var(--bg2);border:1px solid var(--line);border-radius:18px;overflow:hidden;display:grid;grid-template-rows:auto 1fr;min-width:0}
+.art{aspect-ratio:16/9;display:block;width:100%;height:auto;background:var(--c1)}
+.body{padding:16px 18px 18px;display:grid;gap:10px;align-content:start}
+.game h2{margin:0;font-family:var(--f-fa-d);font-weight:400;font-size:28px;line-height:1.15}
+html[lang=en] .game h2,.game h2.en{font-family:var(--f-en-d);font-weight:800;font-size:25px;letter-spacing:-.01em}
+.game p{margin:0;color:var(--dim);font-size:14.5px;line-height:1.85}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tags span{font-size:12px;color:var(--dim);border:1px solid var(--line);border-radius:999px;padding:2px 10px}
+.acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.btn{display:inline-flex;align-items:center;gap:8px;text-decoration:none;font-weight:700;font-size:15px;border-radius:12px;padding:10px 18px;border:1px solid var(--line);color:var(--ink)}
+.btn.play{background:var(--c2);border-color:var(--c2);color:var(--on)}
+.btn svg{width:16px;height:16px;flex:none}
+html[dir=rtl] .btn.play svg{transform:scaleX(-1)}
+.btn:hover{filter:brightness(1.08)}
+.g-genesis{--c1:#0D0B18;--c2:#D35400;--on:#fff}
+.g-bunker{--c1:#0b1324;--c2:#ffc93c;--on:#3a1d00}
+.g-tower{--c1:#fff6e6;--c2:#ff5c9d;--on:#16121f}
+footer{color:var(--dim);font-size:13px;line-height:1.8;border-top:1px solid var(--line);padding-top:16px}
+footer a{color:var(--ink)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1 data-t="title"></h1>
+      <p class="lede" data-t="lede"></p>
+    </div>
+    <div class="seg" role="group" aria-label="Language">
+      <button type="button" data-lang="fa">فارسی</button>
+      <button type="button" data-lang="en">English</button>
+    </div>
+  </header>
+
+  <main class="shelf">
+    <article class="game g-genesis">
+      <svg class="art" viewBox="0 0 320 180" role="img" aria-label="Genesis">
+        <defs>
+          <radialGradient id="gv" cx="50%" cy="100%" r="70%"><stop offset="0" stop-color="#e2661a" stop-opacity=".75"/><stop offset=".45" stop-color="#7a2a1a" stop-opacity=".25"/><stop offset="1" stop-color="#0D0B18" stop-opacity="0"/></radialGradient>
+          <radialGradient id="ga" cx="35%" cy="30%" r="70%"><stop offset="0" stop-color="#fde9c6"/><stop offset="1" stop-color="#F5B041"/></radialGradient>
+          <radialGradient id="gb" cx="35%" cy="30%" r="70%"><stop offset="0" stop-color="#c9f5ec"/><stop offset="1" stop-color="#48C9B0"/></radialGradient>
+        </defs>
+        <rect width="320" height="180" fill="#0D0B18"/>
+        <rect width="320" height="180" fill="url(#gv)"/>
+        <g fill="#d9cfee" opacity=".35"><circle cx="40" cy="30" r="1"/><circle cx="270" cy="22" r="1.2"/><circle cx="210" cy="60" r=".8"/><circle cx="90" cy="70" r=".9"/><circle cx="300" cy="90" r="1"/></g>
+        <path d="M128 180 L142 150 L152 138 L168 139 L178 152 L192 180Z" fill="#060409"/>
+        <ellipse cx="158" cy="141" rx="9" ry="3" fill="#ff8a2e"/>
+        <path d="M180 30 L172 58 L184 60 L170 92" stroke="#e3eeff" stroke-width="2.4" fill="none" stroke-linejoin="round"/>
+        <g stroke="#f5d08a" stroke-width="5" stroke-linecap="round" opacity=".8"><path d="M136 92 L158 104 L182 96 L196 114"/></g>
+        <circle cx="136" cy="92" r="11" fill="url(#ga)"/><circle cx="158" cy="104" r="11" fill="url(#gb)"/><circle cx="182" cy="96" r="11" fill="url(#ga)"/><circle cx="196" cy="114" r="11" fill="url(#gb)"/>
+        <circle cx="182" cy="96" r="16" fill="none" stroke="#F1C40F" stroke-width="2" opacity=".8"/>
+      </svg>
+      <div class="body">
+        <h2 data-t="gTitle"></h2>
+        <p data-t="gDesc"></p>
+        <div class="tags"><span>فارسی · English</span><span data-t="web"></span><span data-t="mobile"></span></div>
+        <div class="acts"><a class="btn play" href="genesis/"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg><span data-t="play"></span></a></div>
+      </div>
+    </article>
+
+    <article class="game g-bunker">
+      <svg class="art" viewBox="0 0 320 180" role="img" aria-label="Last Bunker">
+        <defs><linearGradient id="bg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#86dc62"/><stop offset="1" stop-color="#4fbb58"/></linearGradient></defs>
+        <rect width="320" height="180" fill="url(#bg1)"/>
+        <path d="M330 88 C260 56 190 130 110 96 C80 84 60 90 40 90" stroke="#efd49a" stroke-width="22" fill="none" stroke-linecap="round"/>
+        <rect x="0" y="0" width="12" height="180" fill="#2f4a73"/>
+        <path d="M58 90 m-120 0 a120 120 0 0 1 0 0" fill="none"/>
+        <path d="M44 -10 A110 110 0 0 1 44 190" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="2" stroke-dasharray="7 6" transform="translate(-4 0)"/>
+        <circle cx="40" cy="90" r="20" fill="#5b6b85" stroke="#2f3a4f" stroke-width="3"/>
+        <rect x="38" y="86" width="30" height="8" rx="3" fill="#2f3a4f"/>
+        <g fill="#ff4d5e" stroke="#c42a40" stroke-width="2"><circle cx="230" cy="70" r="7"/><circle cx="262" cy="104" r="7"/><circle cx="198" cy="120" r="7"/><rect x="276" y="56" width="26" height="18" rx="5"/></g>
+        <g stroke="#ffd84a" stroke-width="3" stroke-linecap="round"><path d="M80 88 L96 84"/><path d="M118 80 L134 77"/><path d="M160 74 L176 72"/></g>
+        <circle cx="230" cy="70" r="14" fill="#ffc93c" opacity=".35"/>
+      </svg>
+      <div class="body">
+        <h2 class="en">Last Bunker</h2>
+        <p data-t="bDesc"></p>
+        <div class="tags"><span>English</span><span data-t="web"></span><span data-t="landscape"></span></div>
+        <div class="acts"><a class="btn play" href="last-bunker/"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg><span data-t="play"></span></a></div>
+      </div>
+    </article>
+
+    <article class="game g-tower">
+      <svg class="art" viewBox="0 0 320 180" role="img" aria-label="Tower to the Moon">
+        <defs><linearGradient id="tg" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#bff0e4"/><stop offset=".55" stop-color="#8fc4ff"/><stop offset="1" stop-color="#3b259a"/></linearGradient></defs>
+        <rect width="320" height="180" fill="url(#tg)"/>
+        <circle cx="250" cy="34" r="20" fill="#b9a6ff" stroke="#16121f" stroke-width="3"/>
+        <circle cx="244" cy="30" r="4" fill="#16121f" opacity=".25"/><circle cx="256" cy="40" r="3" fill="#16121f" opacity=".25"/>
+        <g stroke="#16121f" stroke-width="3">
+          <rect x="128" y="150" width="64" height="18" fill="#ffd23f"/>
+          <rect x="131" y="132" width="62" height="18" fill="#ff5c9d"/>
+          <rect x="127" y="114" width="62" height="18" fill="#14c7b4"/>
+          <rect x="132" y="96" width="60" height="18" fill="#3552ff"/>
+          <rect x="129" y="78" width="60" height="18" fill="#ffd23f"/>
+          <rect x="133" y="60" width="58" height="18" fill="#ff5c9d"/>
+        </g>
+        <rect x="0" y="166" width="320" height="14" fill="#16121f"/>
+        <path d="M150 40 L162 52 L174 40" stroke="#16121f" stroke-width="3" fill="none"/>
+        <rect x="140" y="20" width="44" height="16" fill="#14c7b4" stroke="#16121f" stroke-width="3"/>
+      </svg>
+      <div class="body">
+        <h2 class="en">Tower to the Moon</h2>
+        <p data-t="tDesc"></p>
+        <div class="tags"><span>English</span><span data-t="web"></span><span>Android</span></div>
+        <div class="acts">
+          <a class="btn play" href="tower-to-the-moon/"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg><span data-t="play"></span></a>
+          <a class="btn" href="https://github.com/kubratemtehh-jpg/tower-to-the-moon-download/releases/latest"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg><span data-t="apk"></span></a>
+        </div>
+      </div>
+    </article>
+  </main>
+
+  <footer><p data-t="foot"></p></footer>
+</div>
+
+<script>
+(()=>{
+const T={
+ fa:{title:'بازی‌ها',lede:'بازی‌های من را همین‌جا در مرورگر بازی کن؛ بدون ثبت‌نام و بدون نصب. روی موبایل هم کار می‌کنند.',
+  gTitle:'خاستگاه حیات',gDesc:'از سوپ داغ دهانه‌های گرمابی تا نخستین یاخته. اتم‌ها را پیوند بده، بعد با آذرخش و شهاب‌سنگ تکامل را پیش ببر.',
+  bDesc:'از سنگر در برابر موج دشمنان دفاع کن و در ۲۵ مرحله، از تپانچه تا حملهٔ هوایی، سلاح‌هایت را ارتقا بده.',
+  tDesc:'برجی بساز از یک میلی‌متر تا ماه. بلوک‌ها هرگز نمی‌افتند؛ با ریتم موسیقی بچین و برج کج را صاف کن.',
+  play:'بازی کن',apk:'دانلود اندروید (APK)',web:'مرورگر',mobile:'مناسب موبایل',landscape:'بهتر: گوشی افقی',
+  foot:'پیشرفت هر بازی در همان مرورگری که بازی می‌کنی ذخیره می‌شود.'},
+ en:{title:'Games',lede:'Play my games right here in the browser. No sign-up, no install, and they work on phones too.',
+  gTitle:'Genesis',gDesc:'From the hot broth of deep-sea vents to the first cell. Bond atoms, then drive evolution with lightning and meteorites.',
+  bDesc:'Defend the bunker against waves of enemies and upgrade your arsenal across 25 stages, from pistol to air strike.',
+  tDesc:'Build a tower from one millimetre to the Moon. Blocks never fall; stack to the beat and straighten a leaning tower.',
+  play:'Play',apk:'Android download (APK)',web:'Browser',mobile:'Mobile friendly',landscape:'Best in landscape',
+  foot:'Each game saves your progress in the browser you play it in.'}
+};
+let lang='fa';
+try{const s=localStorage.getItem('games-lang');if(s==='fa'||s==='en')lang=s;else if(!/^fa/i.test(navigator.language||'fa'))lang='en'}catch(e){}
+function apply(){
+  const t=T[lang],h=document.documentElement;h.lang=lang;h.dir=lang==='fa'?'rtl':'ltr';
+  document.title=lang==='fa'?'بازی‌ها · Games':'Games · بازی‌ها';
+  document.querySelectorAll('[data-t]').forEach(el=>{el.textContent=t[el.dataset.t]});
+  document.querySelectorAll('[data-lang]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.lang===lang));
+}
+document.querySelectorAll('[data-lang]').forEach(b=>b.addEventListener('click',()=>{lang=b.dataset.lang;try{localStorage.setItem('games-lang',lang)}catch(e){}apply()}));
+apply();
+})();
+</script>
+</body>
+</html>
