@@ -435,33 +435,53 @@ function fire(){
   if(S.ammo===0)startReload();
 }
 function aimAngle(fromY){return Math.atan2(S.aim.y-fromY,S.aim.x-BK.x)}
+// Heavy weapons pick their own targets, so they work with a thumb that only sets direction.
+// Cannon: value first, then distance to the bunker; anything already hitting the bunker gets top priority.
+function cannonTarget(){
+  if(!S.cannon)return null;const c=CANNON[S.cannon];let best=null,bs=-1e9;
+  for(const e of S.enemies){if(e.dead||e.x>W-5)continue;const d=dist(e.x,e.y,BK.x,BK.y);if(d>c.range)continue;
+    const atWall=d<=(e.stop||BK.r+e.r+4)+6&&!e.stop;const sc=e.pts*40-d+(atWall?260:0);if(sc>bs){bs=sc;best=e}}
+  return best;
+}
+function leadPos(e,ox,oy,speed){const d=dist(e.x,e.y,ox,oy),t=d/speed,moving=d>(e.stop||BK.r+e.r+4)+2;
+  return moving?{x:e.x+Math.cos(e.ang)*e.speed*t,y:e.y+Math.sin(e.ang)*e.speed*t,t}:{x:e.x,y:e.y,t}}
 function fireCannon(){
   if(!S.cannon||S.canT>0||!live())return;
-  const c=CANNON[S.cannon];S.canT=c.cd;
-  let tx=S.aim.x,ty=S.aim.y;const d=dist(tx,ty,BK.x,BK.y);
-  if(d>c.range){const a=Math.atan2(ty-BK.y,tx-BK.x);tx=BK.x+Math.cos(a)*c.range;ty=BK.y+Math.sin(a)*c.range}
-  S.canAng=aimAngle(BK.y-28);S.canKick=1;
+  const c=CANNON[S.cannon],tg=cannonTarget();
+  if(!tg){S.texts.push({x:BK.x,y:BK.y-BK.r-14,t:'No target in range',life:.9});return}
+  S.canT=c.cd;
+  const L=leadPos(tg,BK.x,BK.y,520);let tx=L.x,ty=L.y;
+  S.canAng=Math.atan2(ty-(BK.y-28),tx-BK.x);S.canKick=1;
   for(let i=0;i<c.shells;i++){const ox=i?rnd(-34,34):0,oy=i?rnd(-34,34):0;
     S.shells.push({sx:BK.x+Math.cos(S.canAng)*30,sy:BK.y-28+Math.sin(S.canAng)*30,tx:tx+ox,ty:ty+oy,t:-i*.14,dur:Math.max(.35,dist(tx,ty,BK.x,BK.y)/520),dmg:c.dmg,splash:c.splash})}
   smoke(BK.x+Math.cos(S.canAng)*36,BK.y-28+Math.sin(S.canAng)*36,5,8);boom(.12,.3);beep(80,.18,'square',.06);updHud();
 }
+// Missiles home in, so each one takes a different high-value target anywhere in range (vehicles and helicopters first).
+function missileTargets(){
+  if(!S.missile)return[];const m=MISSILE[S.missile];
+  return S.enemies.filter(e=>!e.dead&&e.x<W&&dist(e.x,e.y,BK.x,BK.y)<=m.range)
+    .sort((a,b)=>(b.pts-a.pts)||(dist(a.x,a.y,BK.x,BK.y)-dist(b.x,b.y,BK.x,BK.y))).slice(0,m.salvo);
+}
 function fireMissiles(){
   if(!S.missile||S.misT>0||!live())return;
-  const m=MISSILE[S.missile];S.misT=m.cd;
-  const cands=S.enemies.filter(e=>!e.dead&&e.x<W&&dist(e.x,e.y,BK.x,BK.y)<=m.range)
-    .sort((a,b)=>dist(a.x,a.y,S.aim.x,S.aim.y)-dist(b.x,b.y,S.aim.x,S.aim.y));
-  S.misAng=aimAngle(BK.y+28);
+  const m=MISSILE[S.missile];
+  const cands=missileTargets();
+  if(!cands.length){S.texts.push({x:BK.x,y:BK.y+BK.r+24,t:'No target in range',life:.9});return}
+  S.misT=m.cd;
+  S.misAng=Math.atan2(cands[0].y-(BK.y+28),cands[0].x-BK.x);
   for(let i=0;i<m.salvo;i++){
     const a=S.misAng+(i-(m.salvo-1)/2)*.32;
     S.missiles.push({x:BK.x+8,y:BK.y+28,vx:Math.cos(a)*150,vy:Math.sin(a)*150,target:cands.length?cands[i%cands.length]:null,
-      px:S.aim.x,py:S.aim.y,life:4,dmg:m.dmg,delay:i*.09,range:m.range});
+      px:cands[i%cands.length].x,py:cands[i%cands.length].y,life:4,dmg:m.dmg,delay:i*.09,range:m.range});
   }
   beep(360,.25,'sawtooth',.03);updHud();
 }
 function airStrike(){
   const a=AIR[S.air];if(!a||S.airT>0||!live())return;
   S.airT=a.cd;
-  const y=Math.max(50,Math.min(H-50,S.aim.y)),planes=S.air===3?3:1,per=Math.ceil(a.bombs/planes);
+  let y=Math.max(50,Math.min(H-50,S.aim.y)),bv=0;
+  for(let yy=50;yy<=H-50;yy+=10){let v=0;for(const e of S.enemies)if(!e.dead&&e.x<W&&e.x>200&&Math.abs(e.y-yy)<(S.air===3?100:45))v+=e.pts;if(v>bv){bv=v;y=yy}}
+  const planes=S.air===3?3:1,per=Math.ceil(a.bombs/planes);
   for(let p=0;p<planes;p++){
     const py=y+(p-(planes-1)/2)*58,sx=W+60+p*40;
     S.planes.push({x:sx,y:py,vx:-540});
@@ -691,9 +711,12 @@ function drawCrosshair(){
   ctx.save();ctx.rotate(now/900);
   for(let i=0;i<4;i++){ctx.rotate(Math.PI/2);ctx.beginPath();ctx.moveTo(16,0);ctx.lineTo(22,0);ctx.stroke()}
   ctx.restore();circ(0,0,2,col);
-  if(S.cannon&&S.canT<=0){ctx.strokeStyle='rgba(255,138,61,.9)';ctx.setLineDash([4,4]);ctx.beginPath();ctx.arc(0,0,CANNON[S.cannon].splash,0,7);ctx.stroke()}
   ctx.restore();
+  if(S.running&&S.missile&&S.misT<=0)for(const t of missileTargets())lockMark(t.x,t.y,t.r+8,'#ff5fa8',0);
+  if(S.running&&S.cannon&&S.canT<=0){const t=cannonTarget();if(t)lockMark(t.x,t.y,t.r+14,'#ff8a3d',1)}
 }
+function lockMark(x,y,r,col,spin){ctx.save();ctx.translate(x,y);ctx.rotate(spin?now/400:Math.PI/4);ctx.strokeStyle=col;ctx.lineWidth=2.5;ctx.globalAlpha=.75+.25*Math.sin(now/120);
+  for(let i=0;i<4;i++){ctx.rotate(Math.PI/2);ctx.beginPath();ctx.arc(0,0,r,-.35,.35);ctx.stroke()}ctx.restore()}
 function drawPlane(p){
   ctx.save();ctx.translate(p.x,p.y);
   ctx.save();ctx.translate(22,26);ctx.fillStyle='rgba(10,40,20,.25)';planeShape();ctx.restore();
@@ -1010,22 +1033,28 @@ function fire2(){
   A.heat+=PV.mg.heat;A.muzzle=.05;beep(560,.03,'square',.02);
   if(A.heat>=1){A.heat=1;A.over=2;beep(140,.3,'sawtooth',.04);A.texts.push({x:p.x,y:p.y-34,t:'OVERHEAT',life:1.2,big:true})}
 }
+const tval=t=>t.kind?({tower:12,depot:10,hq:20})[t.kind]:t.pts;
+function pool2(range){const p=A.p;return[...A.enemies.filter(e=>!e.dead),...A.structs.filter(s=>!s.dead&&!(s.kind==='hq'&&hqShielded()))].filter(t=>dist(t.x,t.y,p.x,p.y)<=range)}
+const threat2=t=>{const d=dist(t.x,t.y,A.p.x,A.p.y);return tval(t)*25-d+((t.kind==='tower'||t.kind==='hq'||(!t.kind&&t.awake))&&d<(t.range||420)?180:0)};
+function cannonTarget2(){let best=null,bs=-1e9;for(const t of pool2(PV.can.range)){const sc=threat2(t);if(sc>bs){bs=sc;best=t}}return best}
+function missileTargets2(){return pool2(PV.mis.range).sort((a,b)=>threat2(b)-threat2(a)).slice(0,PV.mis.salvo)}
 function cannon2(){
   if(!A.running||A.paused||A.result||A.canT>0)return;
-  const p=A.p,c=PV.can;A.canT=c.cd;A.recoil=1;
-  let tx=A.aim.x,ty=A.aim.y;const d=dist(tx,ty,p.x,p.y);
-  if(d>c.range){const a=Math.atan2(ty-p.y,tx-p.x);tx=p.x+Math.cos(a)*c.range;ty=p.y+Math.sin(a)*c.range}
-  const sx=p.x+Math.cos(p.tur)*38,sy=p.y+Math.sin(p.tur)*38;
-  A.shells.push({sx,sy,tx,ty,t:0,dur:Math.max(.25,dist(tx,ty,sx,sy)/620),dmg:c.dmg,splash:c.splash});
+  const p=A.p,c=PV.can,tg=cannonTarget2();
+  if(!tg){A.texts.push({x:p.x,y:p.y-34,t:'No target in range',life:.9});return}
+  A.canT=c.cd;A.recoil=1;
+  const sx=p.x+Math.cos(p.tur)*38,sy=p.y+Math.sin(p.tur)*38,d=dist(tg.x,tg.y,sx,sy),ft=Math.max(.25,d/620);
+  const mv=!tg.kind&&tg.awake?{x:tg.x+Math.cos(tg.ang)*tg.speed*ft*.6,y:tg.y+Math.sin(tg.ang)*tg.speed*ft*.6}:{x:tg.x,y:tg.y};
+  A.shells.push({sx,sy,tx:mv.x,ty:mv.y,t:0,dur:ft,dmg:c.dmg,splash:c.splash});
   smoke(sx,sy,4,6);boom(.12,.3);beep(80,.18,'square',.06);updHud2();
 }
 function missiles2(){
   if(!A.running||A.paused||A.result||A.misT>0)return;
-  const p=A.p,m=PV.mis;A.misT=m.cd;
-  const pool=[...A.enemies.filter(e=>!e.dead),...A.structs.filter(s=>!s.dead&&!(s.kind==='hq'&&hqShielded()))]
-    .filter(t=>dist(t.x,t.y,p.x,p.y)<=m.range).sort((a,b)=>dist(a.x,a.y,A.aim.x,A.aim.y)-dist(b.x,b.y,A.aim.x,A.aim.y));
+  const p=A.p,m=PV.mis,pool=missileTargets2();
+  if(!pool.length){A.texts.push({x:p.x,y:p.y-34,t:'No target in range',life:.9});return}
+  A.misT=m.cd;
   for(let i=0;i<m.salvo;i++){const a=p.tur+(i-1)*.5;
-    A.missiles.push({x:p.x,y:p.y,vx:Math.cos(a)*160,vy:Math.sin(a)*160,target:pool.length?pool[i%pool.length]:null,px:A.aim.x,py:A.aim.y,life:3.5,dmg:m.dmg,delay:i*.1})}
+    A.missiles.push({x:p.x,y:p.y,vx:Math.cos(a)*160,vy:Math.sin(a)*160,target:pool[i%pool.length],px:pool[i%pool.length].x,py:pool[i%pool.length].y,life:3.5,dmg:m.dmg,delay:i*.1})}
   beep(360,.25,'sawtooth',.03);updHud2();
 }
 function enemyShot(x,y,tx,ty,spd,dmg,big){const a=Math.atan2(ty-y,tx-x)+rnd(-.06,.06);A.eshots.push({x,y,vx:Math.cos(a)*spd,vy:Math.sin(a)*spd,dmg,big,life:2.2})}
@@ -1225,8 +1254,9 @@ function draw2(){
     ctx.lineWidth=2;ctx.strokeStyle=col;ctx.beginPath();ctx.arc(0,0,12,0,7);ctx.stroke();ctx.rotate(now/900);
     for(let i=0;i<4;i++){ctx.rotate(Math.PI/2);ctx.beginPath();ctx.moveTo(16,0);ctx.lineTo(22,0);ctx.stroke()}
     ctx.rotate(-now/900);circ(0,0,2,col);
-    if(A.canT<=0){ctx.strokeStyle='rgba(255,138,61,.85)';ctx.setLineDash([4,4]);ctx.beginPath();ctx.arc(0,0,PV.can.splash,0,7);ctx.stroke()}
     ctx.restore();
+    if(A.misT<=0)for(const t of missileTargets2())lockMark(t.x,t.y,(t.r||14)+8,'#ff5fa8',0);
+    if(A.canT<=0){const t=cannonTarget2();if(t)lockMark(t.x,t.y,(t.r||14)+14,'#ff8a3d',1)}
     ctx.save();ctx.setLineDash([3,9]);ctx.strokeStyle='rgba(255,255,255,.35)';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(p.x,p.y,PV.mg.range,0,7);ctx.stroke();ctx.restore()}
   ctx.restore();
   drawIndicators();drawMinimap();drawStick();
