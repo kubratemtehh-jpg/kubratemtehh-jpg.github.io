@@ -51,6 +51,21 @@ bdi.f{font-family:var(--f-mono);font-weight:600;color:var(--phos);font-size:14px
 #chance .coin{width:30px;height:30px;margin:0;font-size:9px;border-width:2px}
 #chance .coin.flip{animation:flipS .9s cubic-bezier(.2,.7,.3,1)}
 @keyframes flipS{50%{transform:rotateY(900deg) scale(1.25)}to{transform:rotateY(1800deg)}}
+.ch.again{background:radial-gradient(circle at 35% 30%,#fff3c4,#d4a017 72%);border-color:#b8860b;color:#3a2a00;font:700 19px var(--f-mono)}
+.ch:disabled{opacity:.45}
+#bAlbum{width:30px;height:30px;padding:0;border-radius:7px;border:1px solid var(--line);background:rgba(236,230,245,.08);display:grid;place-items:center;position:relative;color:var(--ink)}
+#bAlbum svg{width:15px;height:15px}
+#bAlbum.new{color:var(--phos)}
+#bAlbum.new::after{content:'';position:absolute;top:-4px;right:-4px;width:10px;height:10px;border-radius:50%;background:var(--phos);box-shadow:0 0 8px var(--phos)}
+#album{background:rgba(13,11,24,.95)}
+#album h2{font-size:clamp(30px,8vw,40px)}
+#albumGrid{display:grid;gap:16px;width:100%}
+.arow{display:grid;gap:8px;justify-items:center}
+.arow>span{font-size:13px;color:var(--ink-dim)}
+.arow>div{display:flex;gap:16px}
+.orb{width:54px;height:54px;border-radius:50%;display:grid;place-items:end center;font-style:normal;background:radial-gradient(circle at 35% 30%,var(--h),var(--c) 70%);box-shadow:0 0 18px var(--c)}
+.orb b{font:600 11px var(--f-mono);color:#0D0B18;background:rgba(255,255,255,.8);border-radius:8px;padding:0 6px;transform:translateY(7px)}
+.orb.off{background:rgba(236,230,245,.05);border:1px dashed rgba(236,230,245,.25);box-shadow:none;place-items:center;color:var(--ink-dim);font-size:18px}
 .ch{width:64px;height:64px;padding:0;border-radius:50%;font-size:28px;font-weight:700;color:#fff;border:2px solid rgba(255,255,255,.3)}
 .ch.keep{background:#2e8b57}.ch.drop{background:#8e3b3b}
 @keyframes pulse{70%{box-shadow:0 0 0 14px rgba(241,196,15,0)}100%{box-shadow:0 0 0 0 rgba(241,196,15,0)}}
@@ -143,7 +158,7 @@ bdi.f{font-family:var(--f-mono);font-weight:600;color:var(--phos);font-size:14px
       <div id="prog"></div>
     </div>
     <div id="hintBox" class="card" hidden></div>
-    <div id="chance" class="card" hidden><span class="die" id="die"></span><span class="coin" id="coin">?</span></div>
+    <div id="chance" class="card" hidden><button id="bAlbum" type="button"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="7" cy="7" r="3.2"/><circle cx="17" cy="7" r="3.2"/><circle cx="7" cy="17" r="3.2"/><circle cx="17" cy="17" r="3.2" opacity=".4"/></svg></button><span class="die" id="die"></span><span class="coin" id="coin">?</span></div>
   </div>
 
   <div id="tray" class="card">
@@ -156,6 +171,7 @@ bdi.f{font-family:var(--f-mono);font-weight:600;color:var(--phos);font-size:14px
     <button id="bBolt" class="ev bolt" type="button"><svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true"><path d="M13.5 2 4.5 13.5h6.5L9.5 22l9-12h-6.5z" fill="currentColor"/></svg></button>
     <button id="bMeteor" class="ev meteor" type="button"><svg viewBox="0 0 24 24" width="32" height="32" aria-hidden="true"><path d="M2.5 4.5l9 6.5M5 2l8.5 8.5M2 8l8.5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" opacity=".55" fill="none"/><circle cx="15.5" cy="15.5" r="6" fill="currentColor"/><circle cx="13.6" cy="14" r="1.4" fill="#2a1408" opacity=".45"/><circle cx="17.4" cy="17.4" r="1" fill="#2a1408" opacity=".45"/></svg></button>
     <button id="bKeep" class="ch keep" type="button" aria-label="Keep" hidden>✓</button>
+    <button id="bAgain" class="ch again" type="button" dir="ltr" hidden><span>×2</span></button>
     <button id="bDrop" class="ch drop" type="button" aria-label="Remove" hidden>✕</button>
   </div>
   <div id="toast" class="card" role="status"></div>
@@ -190,6 +206,14 @@ bdi.f{font-family:var(--f-mono);font-weight:600;color:var(--phos);font-size:14px
       <p data-i="finText"></p>
       <button class="primary" id="bGo2" type="button" data-i="go2"></button>
       <button id="bFree" type="button" data-i="cont"></button>
+    </div>
+  </div>
+  <div id="album" class="overlay" hidden>
+    <div class="inner">
+      <h2 data-i="album"></h2>
+      <div class="sub" id="albumCount"></div>
+      <div id="albumGrid"></div>
+      <button class="primary" id="bAlbumClose" type="button" data-i="albumClose"></button>
     </div>
   </div>
   <div id="ep2card" class="overlay" hidden>
@@ -227,9 +251,9 @@ const STR={
   episodes:'اپیزودها',ep1:'۱ · سنتز بنیادین',ep2:'۲ · تکامل زنده',go2:'ادامه: تکامل زنده',
   ep2Title:'تبار تو زنده است',
   ep2Text:'رعد و برق یا شهاب‌سنگ بفرست تا ترکیب تغییر کند. تاس و سکه نتیجه را تعیین می‌کنند و انتخاب آخر با توست.',
-  idleStep:(e,m)=>`دوران ${e} از ${m}`,idleHint:'رعد و برق یا شهاب‌سنگ بفرست. تاس و سکهٔ بالا خودشان می‌چرخند. اگر تغییر ماند، با ✓ یا ✕ انتخاب کن.',bolt:'رعد و برق',meteor:'شهاب‌سنگ',
+  idleStep:(e,m)=>`دوران ${e} از ${m}`,idleHint:'رعد و برق یا شهاب‌سنگ بفرست. تاس و سکهٔ بالا خودشان می‌چرخند. اگر تغییر ماند، با ✓ یا ✕ انتخاب کن.',bolt:'رعد و برق',meteor:'شهاب‌سنگ',album:'کشف‌ها',albumClose:'بستن',newRare:'کشف تازه!',
   done:'مرحلهٔ ۱ کامل شد',heads:'شیر',tails:'خط',grew:n=>`در غیاب تو ${n} بخش تازه رشد کرد`,
-  helpIdle:[['رعد و برق','انرژی؛ تغییرهای کوچک‌تر.'],['شهاب‌سنگ','ماده و ضربه از فضا؛ تغییرهای بزرگ‌تر، هم سود و هم آسیب.'],['تاس','نوع تغییر را تعیین می‌کند.'],['سکه','شیر: تغییر می‌ماند. خط: محو می‌شود.'],['✓ / ✕','تغییرِ مانده را نگه دار یا حذف کن.'],['زمان','وقتی بازی بسته است، ترکیب آرام رشد می‌کند.']],
+  helpIdle:[['ضربهٔ کامل','وقتی حلقهٔ آبی روی دایرهٔ کم‌رنگ نشست و طلایی شد، بزن: تاس بهتر و شانس کشف بیشتر.'],['×۲','بعد از شیر می‌توانی دوباره سکه بیندازی. هر شیر تغییر را بزرگ‌تر می‌کند؛ یک خط همه را محو می‌کند.'],['کشف‌ها','تکه‌های طلایی، فسفری و بلورین کمیاب‌اند و در آلبوم ثبت می‌شوند.'],['رعد و برق','انرژی؛ تغییرهای کوچک‌تر.'],['شهاب‌سنگ','ماده و ضربه از فضا؛ تغییرهای بزرگ‌تر، هم سود و هم آسیب.'],['تاس','نوع تغییر را تعیین می‌کند.'],['سکه','شیر: تغییر می‌ماند. خط: محو می‌شود.'],['✓ / ✕','تغییرِ مانده را نگه دار یا حذف کن.'],['زمان','وقتی بازی بسته است، ترکیب آرام رشد می‌کند.']],
   freeHint:'آزادانه مولکول بسازید؛ هر مولکول پایدار در مخزن ثبت می‌شود.',
   stepDone:n=>`گام کامل شد: ${n}`,made:(n,f)=>`${n} ساخته شد · ${f}`,
   reserve:'ذخیره',reserveHint:'هرچه لازم دارید پایین بکشید',parked:'به ذخیره رفت',
@@ -255,9 +279,9 @@ const STR={
   episodes:'Episodes',ep1:'1 · Prebiotic Broth',ep2:'2 · Living evolution',go2:'Continue: living evolution',
   ep2Title:'Your lineage is alive',
   ep2Text:'Send lightning or a meteorite to change the compound. The die and coin decide the outcome, and the final choice is yours.',
-  idleStep:(e,m)=>`Era ${e} of ${m}`,idleHint:'Send lightning or a meteorite. The die and coin up top spin on their own. If the change stays, pick ✓ or ✕.',bolt:'Lightning',meteor:'Meteorite',
+  idleStep:(e,m)=>`Era ${e} of ${m}`,idleHint:'Send lightning or a meteorite. The die and coin up top spin on their own. If the change stays, pick ✓ or ✕.',bolt:'Lightning',meteor:'Meteorite',album:'Discoveries',albumClose:'Close',newRare:'New find!',
   done:'Stage 1 complete',heads:'Heads',tails:'Tails',grew:n=>`${n} new part${n==1?'':'s'} grew while you were away`,
-  helpIdle:[['Lightning','Energy; smaller changes.'],['Meteorite','Matter and impact from space; bigger changes, both good and bad.'],['Die','Sets the kind of change.'],['Coin','Heads: the change stays. Tails: it fades.'],['✓ / ✕','Keep or remove a change that stayed.'],['Time','While the game is closed, the compound slowly grows.']],
+  helpIdle:[['Perfect strike','Fire when the blue ring lands on the faint circle and turns gold: a better roll and a better chance of a rare find.'],['×2','After heads you can flip again. Each heads makes the change bigger; one tails wipes it all.'],['Discoveries','Golden, phosphor and crystal parts are rare and go into your album.'],['Lightning','Energy; smaller changes.'],['Meteorite','Matter and impact from space; bigger changes, both good and bad.'],['Die','Sets the kind of change.'],['Coin','Heads: the change stays. Tails: it fades.'],['✓ / ✕','Keep or remove a change that stayed.'],['Time','While the game is closed, the compound slowly grows.']],
   freeHint:'Build freely. Every stable molecule is added to your collection.',
   stepDone:n=>`Step complete: ${n}`,made:(n,f)=>`${n} formed · ${f}`,
   reserve:'Reserve',reserveHint:'drag down what you need',parked:'Moved to reserve',
@@ -726,15 +750,20 @@ const ERAS=[
  {name:{fa:'پیش‌یاخته',en:'Protocell'},goal:14,hues:[175,200,150,290]}
 ];
 const GROW_MS=30*60e3,GROW_MAX=4;
-let EV=null,pend=null,phase='idle',fadeT=0,morphT=0,evoGlow=0,lastSave=0;
+let EV=null,pend=null,phase='idle',fadeT=0,morphT=0,evoGlow=0,lastSave=0,gambling=false,pops=[],shakeT=0,wobble=0;
+const RARE=[{c:'#F1C40F',hi:'#fff6c8',name:{fa:'طلایی',en:'Golden'}},{c:'#5dfc8f',hi:'#e8ffee',name:{fa:'فسفری',en:'Phosphor'}},{c:'#9fdcff',hi:'#ffffff',name:{fa:'بلورین',en:'Crystal'}}];
+const RING_MS=1500,ringQ=()=>(performance.now()%RING_MS)/RING_MS,ringR=R=>R*(1.6-.7*ringQ());
+function inPerfect(){const L=layout(EV.parts.length);return Math.abs(ringR(L.R)-L.R)<L.R*.05}
+function pop(txt,col,size){const L=layout(EV.parts.length);pops.push({txt,col:col||'#F1C40F',size:size||34,x:L.cx,y:L.cy-L.R*.62,life:70})}
+function maybeRare(list,ch){for(const p of list)if(p.rare==null&&!p.f&&Math.random()<ch){p.rare=Math.floor(Math.random()*3);p.s=false}}
 const L2=o=>o[save.lang]||o.en;
 const pickHue=()=>{const h=ERAS[EV.era].hues;return h[Math.floor(Math.random()*h.length)]};
 function seedParts(){return [0,1,2].map(()=>({h:pickHue(),f:false,s:false,b:frame}))}
 function evoInit(){
   if(!save.evo){save.evo={era:0,parts:[],last:Date.now(),done:false};EV=save.evo;EV.parts=seedParts()}
-  EV=save.evo;EV.parts.forEach(p=>p.b=-999);growOffline();
+  EV=save.evo;EV.album=EV.album||{};EV.parts.forEach(p=>p.b=-999);growOffline();
 }
-const score=()=>EV.parts.reduce((a,p)=>a+(p.f?0:p.s?2:1),0);
+const score=()=>EV.parts.reduce((a,p)=>a+(p.f?0:p.rare!=null?3:p.s?2:1),0);
 const progress=()=>Math.min(100,score()/ERAS[EV.era].goal*100);
 function growOffline(){
   const away=Date.now()-EV.last,n=Math.min(GROW_MAX,Math.floor(away/GROW_MS));
@@ -763,17 +792,22 @@ function applyChange(c){
 const PIPS={1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
 function setDie(f){$('die').innerHTML=[...Array(9)].map((_,i)=>`<i class="${PIPS[f].includes(i)?'on':''}"></i>`).join('')}
 function dockState(){
-  const choose=phase==='choose';
-  $('bBolt').hidden=choose;$('bMeteor').hidden=choose;$('bKeep').hidden=!choose;$('bDrop').hidden=!choose;
+  const ch=phase==='choose'||(phase==='flipping'&&gambling);
+  $('bBolt').hidden=$('bMeteor').hidden=ch;$('bKeep').hidden=$('bDrop').hidden=!ch;
+  const ag=ch&&pend&&pend.base&&pend.base.length>0&&pend.mult<5;$('bAgain').hidden=!ag;
+  if(ag)$('bAgain').firstElementChild.textContent='×'+num(pend.mult+1);
+  $('bKeep').disabled=$('bDrop').disabled=$('bAgain').disabled=phase!=='choose';
   $('bBolt').disabled=$('bMeteor').disabled=phase!=='idle'||!!morphT;
 }
 let strike=null;
 function boltPath(tx,ty){const pts=[],sx=tx+(Math.random()-.5)*W*.35,n=13;for(let i=0;i<=n;i++){const k=i/n,j=i&&i<n;pts.push([sx+(tx-sx)*k+(j?(Math.random()-.5)*34:0),(ty)*k+(j?(Math.random()-.5)*10:0)])}return pts}
 function trigger(kind){
-  if(phase!=='idle'||morphT||!EV)return;ensureAudio();phase='strike';dockState();resetCoin();
+  if(phase!=='idle'||morphT||!EV)return;ensureAudio();const perfect=inPerfect();phase='strike';dockState();resetCoin();
   const L=layout(EV.parts.length),a=Math.random()*6.28,d=Math.random()*L.R*.4,tx=L.cx+Math.cos(a)*d,ty=L.cy+Math.sin(a)*d;
   if(kind==='bolt'){strike={kind,t:0,dur:30,tx,ty,pts:boltPath(tx,ty)};tone('sawtooth',150,38,.4,.2);tone('triangle',2600,500,.14,.08);buzz(25)}
   else{const l=Math.random()<.5;strike={kind,t:0,dur:50,tx,ty,sx:l?-30:W+30,sy:-30};tone('sine',1100,180,.6,.05)}
+  strike.perfect=perfect;
+  if(perfect){pop('★','#bfe9ff',52);tone('sine',1320,0,.5,.12);tone('sine',1760,0,.6,.09,.09);buzz([10,30,10]);burst(L.cx,L.cy-L.R,24,'#bfe9ff')}
 }
 function makeMeteor(f){
   const P=EV.parts,plain=P.map((p,i)=>i).filter(i=>!P[i].f&&!P[i].s),np=()=>({h:pickHue(),f:false,s:false,b:frame});
@@ -786,22 +820,33 @@ function makeMeteor(f){
   if(f===6)c.add=[Object.assign(np(),{s:true}),np(),np()];
   return c;
 }
-function rollAuto(kind){
+function rollAuto(kind,perfect){
   phase='rolling';const d=$('die');d.classList.add('roll');let n=0;
   const iv=setInterval(()=>{setDie(1+Math.floor(Math.random()*6));tone('triangle',300+Math.random()*200,0,.03,.04);
-    if(++n>(reduce?2:10)){clearInterval(iv);d.classList.remove('roll');const f=1+Math.floor(Math.random()*6);setDie(f);
-      pend=kind==='meteor'?makeMeteor(f):makeChange(f);tone('sine',180,90,.2,.15);buzz(10);setTimeout(flipAuto,reduce?200:1000)}},60);
+    if(++n>(reduce?2:10)){clearInterval(iv);d.classList.remove('roll');const f=perfect?3+Math.floor(Math.random()*4):1+Math.floor(Math.random()*6);setDie(f);
+      pend=kind==='meteor'?makeMeteor(f):makeChange(f);pend.mult=1;maybeRare(pend.add,perfect?.3:.1);
+      if(!Object.keys(EV.album).length&&(EV.keeps||0)>=2&&pend.add.length&&!pend.add.some(q=>q.rare!=null))pend.add[0].rare=Math.floor(Math.random()*3);pend.base=pend.add.map(p=>Object.assign({},p,{rare:undefined}));
+      tone('sine',180,90,.2,.15);buzz(10);setTimeout(()=>flipAuto(false),reduce?200:1000)}},60);
 }
-function flipAuto(){
-  phase='flipping';const c=$('coin');c.classList.remove('flip','tails','heads');c.textContent='';void c.offsetWidth;c.classList.add('flip');tone('sine',1500,0,.5,.04);
-  setTimeout(()=>{const h=Math.random()<.5;c.classList.add(h?'heads':'tails');c.textContent=h?S('heads'):S('tails');tone('sine',h?880:440,0,.5,.1);buzz(10);
-    if(h){phase='choose';dockState()}else fadeOut()},reduce?120:900);
+function flipAuto(gamble){
+  phase='flipping';dockState();const c=$('coin');c.classList.remove('flip','tails','heads');c.textContent='';void c.offsetWidth;c.classList.add('flip');tone('sine',1500,0,.5,.04);
+  setTimeout(()=>{const h=Math.random()<.5;gambling=false;c.classList.add(h?'heads':'tails');c.textContent=h?S('heads'):S('tails');buzz(10);
+    if(h){
+      if(gamble){pend.mult++;const extra=pend.base.map(p=>Object.assign({},p,{b:frame}));maybeRare(extra,.12+pend.mult*.08);pend.add.push(...extra);
+        pop('×'+num(pend.mult),'#F1C40F',30+pend.mult*9);tone('sine',523*Math.pow(1.26,pend.mult-1),0,.45,.14);tone('sine',1046*Math.pow(1.26,pend.mult-1),0,.35,.05,.05);evoGlow=40;wobble=30;
+        const L=layout(EV.parts.length);burst(L.cx,L.cy,16+pend.mult*8,'#F1C40F')}
+      else tone('sine',880,0,.5,.1);
+      phase='choose';dockState()}
+    else{if(gamble){pop('×'+num(0),'#E74C3C',44);tone('sawtooth',320,70,.6,.12);shakeT=14}else tone('sine',440,0,.5,.1);fadeOut()}},reduce?120:900);
 }
-function fadeOut(){phase='fading';fadeT=45;dockState();sfxBreak()}
+function again(){if(phase!=='choose'||!pend||!pend.base||!pend.base.length||pend.mult>=5)return;ensureAudio();gambling=true;flipAuto(true)}
+function fadeOut(){gambling=false;phase='fading';fadeT=45;dockState();sfxBreak()}
 function choose(keep){
   if(phase!=='choose')return;ensureAudio();
   if(!keep)return fadeOut();
-  applyChange(pend);pend=null;evoGlow=50;sfxChord(false);buzz(15);phase='idle';dockState();persist();hud();
+  let fresh=false;for(const q of pend.add)if(q.rare!=null){const id=EV.era*3+q.rare;if(!EV.album[id])fresh=true;EV.album[id]=(EV.album[id]||0)+1}
+  EV.keeps=(EV.keeps||0)+1;const big=pend.mult>1;applyChange(pend);pend=null;evoGlow=50;wobble=40;sfxChord(big||fresh);buzz(big?[15,30,15]:15);phase='idle';dockState();persist();hud();
+  if(fresh){const L=layout(EV.parts.length);setTimeout(()=>{pop(S('newRare'),'#bfe9ff',30);flashes.push({x:L.cx,y:L.cy,life:50});burst(L.cx,L.cy,40,'#F1C40F');burst(L.cx,L.cy,30,'#bfe9ff');tone('sine',988,0,.8,.1);tone('sine',1318,0,.9,.08,.12);tone('sine',1976,0,1,.06,.24);buzz([20,40,20,40])},350);$('bAlbum').classList.add('new')}
   if(progress()>=100&&!EV.done)setTimeout(startMorph,700);
 }
 function resetCoin(){const c=$('coin');c.classList.remove('flip','tails','heads');c.textContent='?'}
@@ -820,12 +865,13 @@ function hudIdle(){
 /* ---- simulation & drawing ---- */
 function stepIdle(){
   if(!EV)return;
-  if(evoGlow>0)evoGlow--;
+  if(evoGlow>0)evoGlow--;if(shakeT>0)shakeT--;if(wobble>0)wobble--;
+  pops.forEach(q=>{q.y-=.5;q.life--});pops=pops.filter(q=>q.life>0);
   if(phase==='fading'&&--fadeT<=0){pend=null;phase='idle';dockState()}
   if(strike){const k=strike;k.t++;
     if(k.kind==='bolt'){if(k.t===1){burst(k.tx,k.ty,26,'#d6e8ff');evoGlow=30}if(k.t%6===0&&k.t<k.dur-8)k.pts=boltPath(k.tx,k.ty)}
-    else if(k.t===30){burst(k.tx,k.ty,40,'#f08a3c');burst(k.tx,k.ty,20,'#F1C40F');tone('sine',70,28,.9,.55);tone('triangle',320,60,.4,.15);buzz([40,30,20]);evoGlow=45}
-    if(k.t>=k.dur){strike=null;rollAuto(k.kind)}}
+    else if(k.t===30){shakeT=18;burst(k.tx,k.ty,40,'#f08a3c');burst(k.tx,k.ty,20,'#F1C40F');tone('sine',70,28,.9,.55);tone('triangle',320,60,.4,.15);buzz([40,30,20]);evoGlow=45}
+    if(k.t>=k.dur){strike=null;rollAuto(k.kind,k.perfect)}}
   if(morphT){morphT++;
     if(morphT===70){flashes.push({x:W/2,y:(topB+botB)/2,life:50});sfxChord(true);buzz([30,60,30]);
       if(EV.era<ERAS.length-1){EV.era++;EV.parts=seedParts();toast(L2(ERAS[EV.era].name),2400)}else{EV.done=true}
@@ -843,13 +889,17 @@ function partPos(i,L,t){
   if(EV.era===1){const sp=R*1.9/slots,y=cy+(i-(L.n-1)/2)*sp,x=cx-R*.12+Math.sin(i*.55+t*.012)*R*.3;return[x,y]}
   const r=R*.74*Math.sqrt((i+.5)/slots),th=i*2.39996+t*.0015;return[cx+Math.cos(th)*r,cy+Math.sin(th)*r];
 }
-function partColor(p,a){return p.f?`rgba(110,100,130,${a})`:`hsla(${p.h},68%,${p.s?62:58}%,${a})`}
+function partColor(p,a){if(p.rare!=null&&!p.f)return RARE[p.rare].c;return p.f?`rgba(110,100,130,${a})`:`hsla(${p.h},68%,${p.s?62:58}%,${a})`}
 function drawPart(x,y,r,p,a,t,mode){
   r=Math.max(1,r);ctx.save();ctx.globalAlpha=a;
   if(p.s||mode){const gr=ctx.createRadialGradient(x,y,r*.5,x,y,r*2.2),col=mode==='flaw'?'231,76,60':mode==='heal'?'88,214,141':'241,196,15';
     gr.addColorStop(0,`rgba(${col},.35)`);gr.addColorStop(1,`rgba(${col},0)`);ctx.fillStyle=gr;ctx.beginPath();ctx.arc(x,y,r*2.2,0,6.28);ctx.fill()}
-  const g=ctx.createRadialGradient(x-r*.35,y-r*.35,1,x,y,r);g.addColorStop(0,p.f?'#8d84a3':`hsl(${p.h},75%,82%)`);g.addColorStop(1,partColor(p,1));
+  const RR=p.rare!=null&&!p.f?RARE[p.rare]:null;
+  if(RR){const gr=r*2.6*(p.rare===1?1+Math.sin(t*.12)*.18:1),gl=ctx.createRadialGradient(x,y,r*.4,x,y,gr);gl.addColorStop(0,RR.c+'99');gl.addColorStop(1,RR.c+'00');ctx.fillStyle=gl;ctx.beginPath();ctx.arc(x,y,gr,0,6.28);ctx.fill()}
+  const g=ctx.createRadialGradient(x-r*.35,y-r*.35,1,x,y,r);g.addColorStop(0,p.f?'#8d84a3':RR?RR.hi:`hsl(${p.h},75%,82%)`);g.addColorStop(1,partColor(p,1));
   ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r,0,6.28);ctx.fill();
+  if(RR){if(p.rare===2){ctx.strokeStyle='rgba(255,255,255,.75)';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(x-r*.6,y);ctx.lineTo(x,y-r*.6);ctx.lineTo(x+r*.6,y);ctx.lineTo(x,y+r*.6);ctx.closePath();ctx.moveTo(x-r*.6,y);ctx.lineTo(x+r*.6,y);ctx.stroke()}
+    const sp=Math.sin(t*.08+x*.05);if(sp>.4){const s2=r*.45*(sp-.4)/.6,sx=x+r*.45,sy=y-r*.45;ctx.fillStyle='#fff';ctx.beginPath();ctx.moveTo(sx,sy-s2);ctx.lineTo(sx+s2*.25,sy);ctx.lineTo(sx,sy+s2);ctx.lineTo(sx-s2*.25,sy);ctx.closePath();ctx.fill();ctx.beginPath();ctx.moveTo(sx-s2,sy);ctx.lineTo(sx,sy+s2*.25);ctx.lineTo(sx+s2,sy);ctx.lineTo(sx,sy-s2*.25);ctx.closePath();ctx.fill()}}
   if(p.f){ctx.strokeStyle='rgba(20,15,30,.8)';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x-r*.5,y-r*.4);ctx.lineTo(x,y);ctx.lineTo(x-r*.1,y+r*.6);ctx.moveTo(x,y);ctx.lineTo(x+r*.55,y-r*.1);ctx.stroke()}
   if(p.s){ctx.strokeStyle='#F1C40F';ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(x,y,r+3,0,6.28);ctx.stroke()}
   if(mode){const pul=.55+Math.sin(t*.15)*.45;ctx.globalAlpha=a*pul;ctx.strokeStyle=mode==='flaw'?'#E74C3C':mode==='heal'?'#58D68D':mode==='rec'?'#ECE6F5':'#F1C40F';
@@ -860,9 +910,10 @@ function renderIdle(t){
   if(!EV)return;
   const P=EV.parts,ghosts=pend?pend.add:[],n=P.length+ghosts.length,L=layout(n),{cx,cy,R}=L;
   const ga=phase==='fading'?fadeT/45*.8:phase==='choose'?.95:.45+Math.sin(t*.12)*.3;
-  const br=1+Math.sin(t*.035)*.025+(evoGlow/50)*.04;
+  const br=(1+Math.sin(t*.035)*.025+(evoGlow/50)*.04)*(1+Math.sin(wobble*.45)*wobble/40*.07);
+  const shx=shakeT&&!reduce?(Math.random()-.5)*shakeT*.9:0,shy=shakeT&&!reduce?(Math.random()-.5)*shakeT*.9:0;
   let ms=1;if(morphT){ms=morphT<70?1-morphT/70:(morphT-70)/70;ms=Math.max(.02,ms)}
-  ctx.save();ctx.translate(cx,cy);ctx.scale(br*ms,br*ms);ctx.translate(-cx,-cy);
+  ctx.save();ctx.translate(cx+shx,cy+shy);ctx.scale(br*ms,br*ms);ctx.translate(-cx,-cy);
   const prog=progress()/100;
   // halo
   const hg=ctx.createRadialGradient(cx,cy,0,cx,cy,R*1.1);hg.addColorStop(0,`rgba(241,196,15,${.05+prog*.1+(evoGlow/50)*.15+(EV.done?.12:0)})`);hg.addColorStop(1,'rgba(241,196,15,0)');ctx.fillStyle=hg;ctx.fillRect(cx-R*1.2,cy-R*1.2,R*2.4,R*2.4);
@@ -888,6 +939,14 @@ function renderIdle(t){
     const grow=Math.max(0,Math.min(1,(frame-(p.b||0))/40));drawPart(x,y,r*(.4+.6*grow),p,1,t,mode);
   }
   ctx.restore();
+  if(phase==='idle'&&!morphT){const rr=ringR(R),ok=Math.abs(rr-R)<R*.05,q=ringQ();ctx.save();
+    ctx.setLineDash([3,7]);ctx.strokeStyle=ok?'rgba(241,196,15,.6)':'rgba(236,230,245,.2)';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(cx,cy,R,0,6.28);ctx.stroke();ctx.setLineDash([]);
+    ctx.strokeStyle=ok?'rgba(241,196,15,.95)':`rgba(150,195,255,${Math.min(1,q*1.5)*.6})`;ctx.lineWidth=ok?4.5:2.5;ctx.beginPath();ctx.arc(cx,cy,rr,0,6.28);ctx.stroke();ctx.restore()}
+  if(pend&&pend.mult>1&&(phase==='choose'||phase==='flipping')){ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';const sc=1+Math.sin(t*.15)*.06;
+    ctx.translate(cx,cy+R*.9);ctx.scale(sc,sc);ctx.font=`700 ${30+pend.mult*5}px "IBM Plex Mono",monospace`;ctx.lineWidth=6;ctx.strokeStyle='rgba(13,11,24,.8)';ctx.direction='ltr';
+    ctx.strokeText('×'+num(pend.mult),0,0);ctx.fillStyle='#F1C40F';ctx.fillText('×'+num(pend.mult),0,0);ctx.restore()}
+  for(const q of pops){ctx.save();ctx.globalAlpha=Math.min(1,q.life/25);ctx.textAlign='center';ctx.textBaseline='middle';ctx.direction=save.lang==='fa'&&!/^[×★]/.test(q.txt)?'rtl':'ltr';
+    const sc=q.life>60?1+(q.life-60)*.06:1;ctx.translate(q.x,q.y);ctx.scale(sc,sc);ctx.font=`700 ${q.size}px Vazirmatn,"IBM Plex Mono",system-ui`;ctx.lineWidth=6;ctx.strokeStyle='rgba(13,11,24,.75)';ctx.strokeText(q.txt,0,0);ctx.fillStyle=q.col;ctx.fillText(q.txt,0,0);ctx.restore()}
   if(strike){const k=strike;ctx.save();
     if(k.kind==='bolt'){const a=(1-k.t/k.dur)*(.65+Math.random()*.35);ctx.lineJoin='round';ctx.lineCap='round';
       ctx.beginPath();k.pts.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));
@@ -906,10 +965,15 @@ function renderIdle(t){
 }
 function idleDown(e){const p=ptr(e),cx=W/2,cy=(topB+botB)/2,R=Math.min(W-48,botB-topB-60)/2;
   if(Math.hypot(p.x-cx,p.y-cy)<R){evoGlow=40;tone('sine',520+Math.random()*200,0,.5,.06);buzz(6)}}
-$('bBolt').onclick=()=>trigger('bolt');$('bMeteor').onclick=()=>trigger('meteor');$('bKeep').onclick=()=>choose(true);$('bDrop').onclick=()=>choose(false);
+$('bBolt').onclick=()=>trigger('bolt');$('bMeteor').onclick=()=>trigger('meteor');$('bKeep').onclick=()=>choose(true);$('bAgain').onclick=again;
+function renderAlbum(){const a=(EV&&EV.album)||{};let found=0;
+  $('albumGrid').innerHTML=ERAS.map((e,ei)=>`<div class="arow"><span>${L2(e.name)}</span><div>${RARE.map((r,k)=>{const n=a[ei*3+k];if(n)found++;return n?`<i class="orb" style="--c:${r.c};--h:${r.hi}" title="${L2(r.name)}"><b>${num(n)}</b></i>`:'<i class="orb off">?</i>'}).join('')}</div></div>`).join('');
+  $('albumCount').textContent=save.lang==='fa'?`${num(found)} از ${num(ERAS.length*RARE.length)}`:`${found} of ${ERAS.length*RARE.length}`}
+$('bAlbum').onclick=()=>{ensureAudio();renderAlbum();$('album').hidden=false;$('bAlbum').classList.remove('new')};
+$('bAlbumClose').onclick=()=>{$('album').hidden=true};$('album').onclick=e=>{if(e.target.id==='album')$('album').hidden=true};$('bDrop').onclick=()=>choose(false);
 document.addEventListener('visibilitychange',()=>{if(!EV)return;if(document.hidden){EV.last=Date.now();persist()}else if(ep===2){growOffline();hud()}});
 function resetWorld(){
-  atoms=[];bonds=[];reacting.clear();reaction=null;recompute();drag=null;sparks=[];arcs=[];pend=null;phase='idle';morphT=0;strike=null;
+  atoms=[];bonds=[];reacting.clear();reaction=null;recompute();drag=null;sparks=[];arcs=[];pend=null;phase='idle';morphT=0;strike=null;gambling=false;pops=[];$('album').hidden=true;
   if(ep===2){evoInit();setDie(5);resetCoin();dockState()}else populate();
 }
 function setEpisode(n,card){
