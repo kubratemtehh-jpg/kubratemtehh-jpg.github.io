@@ -45,7 +45,9 @@ bdi.f{font-family:var(--f-mono);font-weight:600;color:var(--phos);font-size:14px
 .ev{width:66px;height:66px;padding:0;border-radius:50%;display:grid;place-items:center;border:2px solid rgba(255,255,255,.22);touch-action:manipulation;transition:opacity .2s,transform .1s}
 .ev.bolt{background:radial-gradient(circle at 35% 30%,#3d5fa8,#1a2550 75%);color:#e3eeff}
 .ev.meteor{background:radial-gradient(circle at 35% 30%,#b8541c,#4a1c0a 75%);color:#ffd9a8}
-.ev:active{transform:scale(.92)}.ev:disabled{opacity:.35;cursor:default}
+.ev:active{transform:scale(.92)}
+.ev.alert{animation:alertP 1s infinite}
+@keyframes alertP{0%{box-shadow:0 0 0 0 rgba(150,230,90,.8)}70%{box-shadow:0 0 0 16px rgba(150,230,90,0)}100%{box-shadow:0 0 0 0 rgba(150,230,90,0)}}.ev:disabled{opacity:.35;cursor:default}
 #chance{position:absolute;right:0;top:calc(100% + 8px);display:flex;gap:6px;padding:5px;border-radius:12px;direction:ltr}
 #chance .die{width:30px;height:30px;padding:5px;gap:2px;border-radius:7px;margin:0;box-shadow:none}
 #chance .coin{width:30px;height:30px;margin:0;font-size:9px;border-width:2px}
@@ -253,7 +255,7 @@ const STR={
   ep2Text:'رعد و برق یا شهاب‌سنگ بفرست تا ترکیب تغییر کند. تاس و سکه نتیجه را تعیین می‌کنند و انتخاب آخر با توست.',
   idleStep:(e,m)=>`دوران ${e} از ${m}`,idleHint:'رعد و برق یا شهاب‌سنگ بفرست. تاس و سکهٔ بالا خودشان می‌چرخند. اگر تغییر ماند، با ✓ یا ✕ انتخاب کن.',bolt:'رعد و برق',meteor:'شهاب‌سنگ',album:'کشف‌ها',albumClose:'بستن',newRare:'کشف تازه!',
   done:'مرحلهٔ ۱ کامل شد',heads:'شیر',tails:'خط',grew:n=>`در غیاب تو ${n} بخش تازه رشد کرد`,
-  helpIdle:[['ضربهٔ کامل','وقتی حلقهٔ آبی روی دایرهٔ کم‌رنگ نشست و طلایی شد، بزن: تاس بهتر و شانس کشف بیشتر.'],['×۲','بعد از شیر می‌توانی دوباره سکه بیندازی. هر شیر تغییر را بزرگ‌تر می‌کند؛ یک خط همه را محو می‌کند.'],['کشف‌ها','تکه‌های طلایی، فسفری و بلورین کمیاب‌اند و در آلبوم ثبت می‌شوند.'],['رعد و برق','انرژی؛ تغییرهای کوچک‌تر.'],['شهاب‌سنگ','ماده و ضربه از فضا؛ تغییرهای بزرگ‌تر، هم سود و هم آسیب.'],['تاس','نوع تغییر را تعیین می‌کند.'],['سکه','شیر: تغییر می‌ماند. خط: محو می‌شود.'],['✓ / ✕','تغییرِ مانده را نگه دار یا حذف کن.'],['زمان','وقتی بازی بسته است، ترکیب آرام رشد می‌کند.']],
+  helpIdle:[['شکل هدف','سایهٔ کم‌رنگ پشت ترکیب، شکل کامل این دوران است؛ هر تکهٔ تازه یکی از جاهایش را پر می‌کند.'],['موج اسیدی','اگر موج سبز نزدیک شد، رعد و برق بزن: از بین می‌رود و انرژی‌اش یک تکهٔ تازه می‌دهد. اگر برسد، یک تکه را می‌سوزاند.'],['ضربهٔ کامل','وقتی حلقهٔ آبی روی دایرهٔ کم‌رنگ نشست و طلایی شد، بزن: تاس بهتر و شانس کشف بیشتر.'],['×۲','بعد از شیر می‌توانی دوباره سکه بیندازی. هر شیر تغییر را بزرگ‌تر می‌کند؛ یک خط همه را محو می‌کند.'],['کشف‌ها','تکه‌های طلایی، فسفری و بلورین کمیاب‌اند و در آلبوم ثبت می‌شوند.'],['رعد و برق','انرژی؛ تغییرهای کوچک‌تر.'],['شهاب‌سنگ','ماده و ضربه از فضا؛ تغییرهای بزرگ‌تر، هم سود و هم آسیب.'],['تاس','نوع تغییر را تعیین می‌کند.'],['سکه','شیر: تغییر می‌ماند. خط: محو می‌شود.'],['✓ / ✕','تغییرِ مانده را نگه دار یا حذف کن.'],['زمان','وقتی بازی بسته است، ترکیب آرام رشد می‌کند.']],
   freeHint:'آزادانه مولکول بسازید؛ هر مولکول پایدار در مخزن ثبت می‌شود.',
   stepDone:n=>`گام کامل شد: ${n}`,made:(n,f)=>`${n} ساخته شد · ${f}`,
   reserve:'ذخیره',reserveHint:'هرچه لازم دارید پایین بکشید',parked:'به ذخیره رفت',
@@ -281,7 +283,7 @@ const STR={
   ep2Text:'Send lightning or a meteorite to change the compound. The die and coin decide the outcome, and the final choice is yours.',
   idleStep:(e,m)=>`Era ${e} of ${m}`,idleHint:'Send lightning or a meteorite. The die and coin up top spin on their own. If the change stays, pick ✓ or ✕.',bolt:'Lightning',meteor:'Meteorite',album:'Discoveries',albumClose:'Close',newRare:'New find!',
   done:'Stage 1 complete',heads:'Heads',tails:'Tails',grew:n=>`${n} new part${n==1?'':'s'} grew while you were away`,
-  helpIdle:[['Perfect strike','Fire when the blue ring lands on the faint circle and turns gold: a better roll and a better chance of a rare find.'],['×2','After heads you can flip again. Each heads makes the change bigger; one tails wipes it all.'],['Discoveries','Golden, phosphor and crystal parts are rare and go into your album.'],['Lightning','Energy; smaller changes.'],['Meteorite','Matter and impact from space; bigger changes, both good and bad.'],['Die','Sets the kind of change.'],['Coin','Heads: the change stays. Tails: it fades.'],['✓ / ✕','Keep or remove a change that stayed.'],['Time','While the game is closed, the compound slowly grows.']],
+  helpIdle:[['Target shape','The faint shadow behind the compound is this era’s finished shape; every new part fills one of its spots.'],['Acid wave','When the green wave drifts in, send lightning: it breaks up and its energy gives you a free part. If it reaches the compound, it burns one part.'],['Perfect strike','Fire when the blue ring lands on the faint circle and turns gold: a better roll and a better chance of a rare find.'],['×2','After heads you can flip again. Each heads makes the change bigger; one tails wipes it all.'],['Discoveries','Golden, phosphor and crystal parts are rare and go into your album.'],['Lightning','Energy; smaller changes.'],['Meteorite','Matter and impact from space; bigger changes, both good and bad.'],['Die','Sets the kind of change.'],['Coin','Heads: the change stays. Tails: it fades.'],['✓ / ✕','Keep or remove a change that stayed.'],['Time','While the game is closed, the compound slowly grows.']],
   freeHint:'Build freely. Every stable molecule is added to your collection.',
   stepDone:n=>`Step complete: ${n}`,made:(n,f)=>`${n} formed · ${f}`,
   reserve:'Reserve',reserveHint:'drag down what you need',parked:'Moved to reserve',
@@ -750,7 +752,7 @@ const ERAS=[
  {name:{fa:'پیش‌یاخته',en:'Protocell'},goal:14,hues:[175,200,150,290]}
 ];
 const GROW_MS=30*60e3,GROW_MAX=4;
-let EV=null,pend=null,phase='idle',fadeT=0,morphT=0,evoGlow=0,lastSave=0,gambling=false,pops=[],shakeT=0,wobble=0;
+let EV=null,pend=null,phase='idle',fadeT=0,morphT=0,evoGlow=0,lastSave=0,gambling=false,pops=[],shakeT=0,wobble=0,acid=null,acidT=1500,burnT=0;
 const RARE=[{c:'#F1C40F',hi:'#fff6c8',name:{fa:'طلایی',en:'Golden'}},{c:'#5dfc8f',hi:'#e8ffee',name:{fa:'فسفری',en:'Phosphor'}},{c:'#9fdcff',hi:'#ffffff',name:{fa:'بلورین',en:'Crystal'}}];
 const RING_MS=1500,ringQ=()=>(performance.now()%RING_MS)/RING_MS,ringR=R=>R*(1.6-.7*ringQ());
 function inPerfect(){const L=layout(EV.parts.length);return Math.abs(ringR(L.R)-L.R)<L.R*.05}
@@ -804,6 +806,7 @@ function boltPath(tx,ty){const pts=[],sx=tx+(Math.random()-.5)*W*.35,n=13;for(le
 function trigger(kind){
   if(phase!=='idle'||morphT||!EV)return;ensureAudio();const perfect=inPerfect();phase='strike';dockState();resetCoin();
   const L=layout(EV.parts.length),a=Math.random()*6.28,d=Math.random()*L.R*.4,tx=L.cx+Math.cos(a)*d,ty=L.cy+Math.sin(a)*d;
+  if(kind==='bolt'&&acid){strike={kind,t:0,dur:26,tx:acid.x,ty:acid.y,pts:boltPath(acid.x,acid.y),zap:true,perfect:false};tone('sawtooth',150,38,.4,.2);tone('triangle',2600,500,.14,.08);buzz(25);acid.dying=1;$('bBolt').classList.remove('alert');return}
   if(kind==='bolt'){strike={kind,t:0,dur:30,tx,ty,pts:boltPath(tx,ty)};tone('sawtooth',150,38,.4,.2);tone('triangle',2600,500,.14,.08);buzz(25)}
   else{const l=Math.random()<.5;strike={kind,t:0,dur:50,tx,ty,sx:l?-30:W+30,sy:-30};tone('sine',1100,180,.6,.05)}
   strike.perfect=perfect;
@@ -871,7 +874,24 @@ function stepIdle(){
   if(strike){const k=strike;k.t++;
     if(k.kind==='bolt'){if(k.t===1){burst(k.tx,k.ty,26,'#d6e8ff');evoGlow=30}if(k.t%6===0&&k.t<k.dur-8)k.pts=boltPath(k.tx,k.ty)}
     else if(k.t===30){shakeT=18;burst(k.tx,k.ty,40,'#f08a3c');burst(k.tx,k.ty,20,'#F1C40F');tone('sine',70,28,.9,.55);tone('triangle',320,60,.4,.15);buzz([40,30,20]);evoGlow=45}
-    if(k.t>=k.dur){strike=null;rollAuto(k.kind,k.perfect)}}
+    if(k.t>=k.dur){strike=null;
+      if(k.zap){acid=null;acidT=1800+Math.random()*1500;burst(k.tx,k.ty,40,'#a6e05a');EV.parts.push({h:pickHue(),f:false,s:false,b:frame});
+        pop('+'+num(1),'#a6e05a',40);sfxChord(false);evoGlow=40;wobble=30;phase='idle';dockState();persist();hud();if(progress()>=100&&!EV.done)setTimeout(startMorph,700)}
+      else rollAuto(k.kind,k.perfect)}}
+  // acid wave: drifts in only while the player is free to act; lightning breaks it up
+  const plainIdx=EV.parts.map((q,i)=>i).filter(i=>!EV.parts[i].f);
+  if(!acid&&phase==='idle'&&!morphT&&!EV.done&&(EV.keeps||0)>=3&&plainIdx.length>=3&&--acidT<=0){
+    const L=layout(EV.parts.length),left=Math.random()<.5;acid={x:left?-70:W+70,y:L.cy+(Math.random()-.5)*L.R*.6,dir:left?1:-1,ph:Math.random()*6,bub:[]};
+    tone('sine',70,55,1.6,.25);tone('triangle',110,90,1.2,.06);buzz([20,60,20]);$('bBolt').classList.add('alert')}
+  if(acid&&!acid.dying){const L=layout(EV.parts.length);
+    if(phase==='idle'&&!morphT){const speed=(W/2+70-L.R*.85)/420;acid.x+=acid.dir*speed;acid.y+=(L.cy-acid.y)*.004}
+    acid.ph+=.05;if(Math.random()<.3)acid.bub.push({x:acid.x+(Math.random()-.5)*70,y:acid.y+(Math.random()-.5)*60,r:1+Math.random()*3,l:40});
+    if(Math.abs(acid.x-L.cx)<L.R*.85&&phase==='idle'){
+      if(plainIdx.length){const i=plainIdx[Math.floor(Math.random()*plainIdx.length)];EV.parts[i].f=true;EV.parts[i].rare=undefined;burnT=40}
+      burst(acid.x,acid.y,30,'#a6e05a');shakeT=16;sfxBreak();tone('sawtooth',200,60,.6,.12);buzz([40,40,40]);pop('!','#E74C3C',48);
+      acid=null;acidT=2400+Math.random()*1800;$('bBolt').classList.remove('alert');persist();hud()}}
+  if(acid)acid.bub.forEach(b=>{b.y-=.4;b.l--}),acid.bub=acid.bub.filter(b=>b.l>0);
+  if(burnT>0)burnT--;
   if(morphT){morphT++;
     if(morphT===70){flashes.push({x:W/2,y:(topB+botB)/2,life:50});sfxChord(true);buzz([30,60,30]);
       if(EV.era<ERAS.length-1){EV.era++;EV.parts=seedParts();toast(L2(ERAS[EV.era].name),2400)}else{EV.done=true}
@@ -880,8 +900,8 @@ function stepIdle(){
   if(Date.now()-lastSave>10000){lastSave=Date.now();EV.last=Date.now();persist()}
 }
 function layout(n){
-  const cx=W/2,cy=(topB+botB)/2,R=Math.min(W-48,botB-topB-60)/2,slots=Math.max(n,ERAS[EV.era].goal+2);
-  return{cx,cy,R,slots,n};
+  const cx=W/2,cy=(topB+botB)/2,R=Math.min(W-48,botB-topB-60)/2,goal=ERAS[EV.era].goal,slots=Math.max(n,goal+2);
+  return{cx,cy,R,slots,n:Math.max(n,goal),goal};
 }
 function partPos(i,L,t){
   const{cx,cy,R,slots}=L;
@@ -918,6 +938,11 @@ function renderIdle(t){
   // halo
   const hg=ctx.createRadialGradient(cx,cy,0,cx,cy,R*1.1);hg.addColorStop(0,`rgba(241,196,15,${.05+prog*.1+(evoGlow/50)*.15+(EV.done?.12:0)})`);hg.addColorStop(1,'rgba(241,196,15,0)');ctx.fillStyle=hg;ctx.fillRect(cx-R*1.2,cy-R*1.2,R*2.4,R*2.4);
   const pts=[];for(let i=0;i<n;i++)pts.push(partPos(i,L,t));
+  {const goal=L.goal,rs=Math.max(9,Math.min(19,R*(EV.era===2?.08:.1)));if(n<goal&&!morphT){ctx.save();
+    const sh=[];for(let i=n;i<goal;i++)sh.push(partPos(i,L,t));
+    if(EV.era!==2){ctx.setLineDash([2,6]);ctx.strokeStyle='rgba(236,230,245,.13)';ctx.lineWidth=2;ctx.beginPath();const st=n?pts[n-1]:sh[0];ctx.moveTo(st[0],st[1]);sh.forEach(q=>ctx.lineTo(q[0],q[1]));ctx.stroke();ctx.setLineDash([])}
+    sh.forEach(([x,y],j)=>{const nx=j===0,a=nx?.35+Math.sin(t*.1)*.2:.14;ctx.strokeStyle=`rgba(236,230,245,${a})`;ctx.lineWidth=nx?2:1.5;ctx.setLineDash(nx?[]:[3,4]);ctx.beginPath();ctx.arc(x,y,rs*(EV.era===1?.7:1),0,6.28);ctx.stroke()});
+    ctx.restore()}}
   let r=Math.max(10,Math.min(21,R*(EV.era===2?.09:.11)));if(EV.era===1)r=Math.min(r,R*1.9/L.slots*.46);
   if(EV.era===0){ctx.lineCap='round';ctx.lineWidth=r*.5;
     for(let i=1;i<n;i++){const g=i>=P.length;ctx.strokeStyle=g?`rgba(241,196,15,${ga*.7})`:'rgba(245,208,138,.7)';ctx.setLineDash(g?[5,6]:[]);ctx.beginPath();ctx.moveTo(...pts[i-1]);ctx.lineTo(...pts[i]);ctx.stroke()}ctx.setLineDash([])}
@@ -939,6 +964,11 @@ function renderIdle(t){
     const grow=Math.max(0,Math.min(1,(frame-(p.b||0))/40));drawPart(x,y,r*(.4+.6*grow),p,1,t,mode);
   }
   ctx.restore();
+  if(acid){const a=acid,dy=a.dying?Math.max(0,1-(a.dying++)/20):1,w=1+Math.sin(a.ph)*.08;ctx.save();ctx.globalAlpha=dy;
+    for(let k=0;k<3;k++){const ox=Math.sin(a.ph*.7+k*2)*14,oy=Math.cos(a.ph*.9+k)*10,rr=(48+k*14)*w,g=ctx.createRadialGradient(a.x+ox,a.y+oy,0,a.x+ox,a.y+oy,rr);
+      g.addColorStop(0,'rgba(175,225,70,.5)');g.addColorStop(.6,'rgba(115,170,40,.24)');g.addColorStop(1,'rgba(80,120,30,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(a.x+ox,a.y+oy,rr,0,6.28);ctx.fill()}
+    ctx.strokeStyle='rgba(200,240,110,.5)';a.bub.forEach(b=>{ctx.globalAlpha=dy*b.l/40;ctx.lineWidth=1;ctx.beginPath();ctx.arc(b.x,b.y,b.r,0,6.28);ctx.stroke()});ctx.restore()}
+  if(burnT>0){ctx.save();ctx.globalAlpha=burnT/40*.25;ctx.fillStyle='#E74C3C';ctx.fillRect(0,0,W,H);ctx.restore()}
   if(phase==='idle'&&!morphT){const rr=ringR(R),ok=Math.abs(rr-R)<R*.05,q=ringQ();ctx.save();
     ctx.setLineDash([3,7]);ctx.strokeStyle=ok?'rgba(241,196,15,.6)':'rgba(236,230,245,.2)';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(cx,cy,R,0,6.28);ctx.stroke();ctx.setLineDash([]);
     ctx.strokeStyle=ok?'rgba(241,196,15,.95)':`rgba(150,195,255,${Math.min(1,q*1.5)*.6})`;ctx.lineWidth=ok?4.5:2.5;ctx.beginPath();ctx.arc(cx,cy,rr,0,6.28);ctx.stroke();ctx.restore()}
@@ -973,7 +1003,7 @@ $('bAlbum').onclick=()=>{ensureAudio();renderAlbum();$('album').hidden=false;$('
 $('bAlbumClose').onclick=()=>{$('album').hidden=true};$('album').onclick=e=>{if(e.target.id==='album')$('album').hidden=true};$('bDrop').onclick=()=>choose(false);
 document.addEventListener('visibilitychange',()=>{if(!EV)return;if(document.hidden){EV.last=Date.now();persist()}else if(ep===2){growOffline();hud()}});
 function resetWorld(){
-  atoms=[];bonds=[];reacting.clear();reaction=null;recompute();drag=null;sparks=[];arcs=[];pend=null;phase='idle';morphT=0;strike=null;gambling=false;pops=[];$('album').hidden=true;
+  atoms=[];bonds=[];reacting.clear();reaction=null;recompute();drag=null;sparks=[];arcs=[];pend=null;phase='idle';morphT=0;strike=null;gambling=false;pops=[];acid=null;acidT=1500;$('album').hidden=true;$('bBolt').classList.remove('alert');
   if(ep===2){evoInit();setDie(5);resetCoin();dockState()}else populate();
 }
 function setEpisode(n,card){
