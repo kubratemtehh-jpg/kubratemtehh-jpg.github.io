@@ -1093,7 +1093,7 @@ function startAssault(cfg){
   const mk=(k,x,y)=>{const t=E2[k];return{k,...t,x,y,hp:t.hp*hm,max:t.hp*hm,armor:t.armor||0,ang:Math.PI,step:rnd(0,6),hit:0,atk:rnd(.5,1.5),sway:rnd(0,6),seed:rnd(0,6),rot:0,awake:false}};
   A={camp:cfg,M,nT:M.towers.length,nD:M.depots.length,running:true,paused:false,time:0,kills:0,credits:0,cam:0,shake:0,flash:0,hurt:0,
     p:{x:260,y:270,r:PV.r,hp:PV.hp,ang:0,tur:0,tread:0},
-    aimS:{x:520,y:270},aim:{x:520,y:270},firing:false,heat:0,over:0,cool:0,canT:0,misT:0,recoil:0,muzzle:0,stick:null,
+    aimS:{x:520,y:270},aim:{x:520,y:270},auto:isTouch,hold:false,firing:false,heat:0,over:0,cool:0,canT:0,misT:0,recoil:0,muzzle:0,stick:null,
     walls:M.walls.map(([x,y,w,h,t],i)=>({x,y,w,h,t,i,hp:cfg&&t==='sand'?70:0})),lastHit:0,flow:{t:4,maxX:260,budget:cfg?Math.round(12+(M.diff||0)*10):14},strikes:[],intensity:0,
     structs:[...M.towers.map(([x,y])=>({kind:'tower',x,y,r:22,hp:60*hm,max:60*hm,armor:2,tur:Math.PI,atk:1,range:380,hit:0,awake:false,side:1})),
       ...M.depots.map(([x,y])=>({kind:'depot',x,y,r:26,hp:50*hm,max:50*hm,armor:0,hit:0})),
@@ -1108,7 +1108,7 @@ function startAssault(cfg){
   for(const id of['startMenu','overMenu','winMenu','failMenu','pauseMenu','campEnd'])$(id).hidden=true;
   toastQ=[];toast(cfg?'Attack '+cfg.name:'Operation Iron Fist',cfg?`${T.label} · ${LAYOUT2[M.layout]||'Open ground'} · ${WXNAME[cfg.weather]}`:'Enemy territory ahead');
   toast('Push forward','Clear the outposts, then build a forward bunker at the site');
-  toast(isTouch?'Left thumb drives':'WASD to drive',isTouch?'Right thumb aims and fires':'Mouse to aim · hold to fire · Q cannon · E missiles');
+  toast(isTouch?'Right thumb drives':'WASD to drive',isTouch?'Gun fires by itself · cannon and missiles on the left':'Mouse to aim · hold to fire · Q cannon · E missiles');
   updHud2();
 }
 const isTouch=typeof matchMedia==='function'&&matchMedia('(hover:none)').matches;
@@ -1222,7 +1222,12 @@ function update2(dt){
   p.x=clamp(p.x,p.r,WW-p.r);p.y=clamp(p.y,p.r,H-p.r);
   if(A.site){const fl=A.structs.reduce((m,q)=>!q.dead&&q.kind!=='hq'?Math.min(m,q.x):m,1e9);if(p.x>fl-80){p.x=fl-80;if(!A.lineMsg||A.time-A.lineMsg>3){A.lineMsg=A.time;A.texts.push({x:p.x,y:p.y-36,t:'Destroy the outpost ahead',life:1.4,big:true})}}}
   A.cam+=(clamp(p.x-W*.38,0,WW-W)-A.cam)*Math.min(1,dt*5);
-  A.aim={x:A.aimS.x+A.cam,y:A.aimS.y};
+  if(A.auto){let best=null,bs=-1e9;
+    for(const t of [...A.enemies.filter(e=>!e.dead&&e.awake),...A.structs.filter(q=>!q.dead&&!(q.kind==='hq'&&hqShielded()))]){const d=dist(t.x,t.y,p.x,p.y);if(d>PV.mg.range)continue;
+      const sc=-d+(t.x>p.x-20?120:0)+(t.kind==='tower'?60:0);if(sc>bs){bs=sc;best=t}}
+    if(best){A.aim={x:best.x,y:best.y};if(A.heat>.85)A.hold=true;if(A.heat<.35)A.hold=false;A.firing=!A.hold}
+    else{A.aim={x:p.x+Math.cos(p.ang)*160,y:p.y+Math.sin(p.ang)*160};A.firing=false}}
+  else A.aim={x:A.aimS.x+A.cam,y:A.aimS.y};
   p.tur+=clamp(angDiff(Math.atan2(A.aim.y-p.y,A.aim.x-p.x),p.tur),-10*dt,10*dt);
   // machine gun with heat
   if(A.over>0){A.over-=dt;if(A.over<=0){A.over=0;A.heat=.35}}
@@ -1316,10 +1321,11 @@ function update2(dt){
     if(A.time-A.lastHit>2)p.hp=Math.min(PV.hp,p.hp+PV.hp*.05*dt)}
   // build site: clear the outposts, then hold the site while the bunker goes up
   if(A.site&&!A.result){const B=A.site,inZone=dist(p.x,p.y,B.x,B.y)<B.r;B.ready=!hqShielded();B.inZone=inZone;
-    if(B.ready&&inZone){if(!B.started){B.started=true;B.wave=A.camp?Math.round(7+(A.M.diff||0)*7):9;toast('Building the forward bunker','Stay inside the site');beep(520,.15,'triangle',.05)}
-      B.prog=Math.min(1,B.prog+dt/20);
+    if(B.ready&&inZone){if(!B.started){B.started=true;B.wave=A.camp?Math.round(12+(A.M.diff||0)*10):14;toast('Building the forward bunker','Stay inside · enemies in the site slow the work');beep(520,.15,'triangle',.05)}
+      B.blockers=A.enemies.reduce((n,e)=>n+(!e.dead&&!e.air&&dist(e.x,e.y,B.x,B.y)<B.r?1:0),0);
+      B.prog=Math.min(1,B.prog+dt/30/(1+.6*B.blockers));
       if(B.prog>=1){A.result='win';A.endT=2.2;A.flash=.35;toast('Forward bunker built',A.camp?'Region captured':'Mission complete');beep(660,.15,'triangle',.06);setTimeout(()=>beep(990,.2,'triangle',.06),130)}}
-    if(B.started&&B.wave>0&&!A.result){B.waveT-=dt;if(B.waveT<=0){B.waveT=rnd(1.1,1.9);spawnRush();B.wave--}}}
+    if(B.started&&B.wave>0&&!A.result){B.waveT-=dt;if(B.waveT<=0){B.waveT=rnd(.8,1.4);const n=Math.min(B.wave,B.prog>.5?2:1);for(let i=0;i<n;i++){spawnRush();B.wave--}}}}
   // enemy shots
   for(const s of A.eshots){s.x+=s.vx*dt;s.y+=s.vy*dt;s.life-=dt;
     if(s.life<=0){s.gone=true;continue}
@@ -1510,7 +1516,7 @@ function drawIndicators(){
     ctx.save();ctx.translate(x,y);ctx.fillStyle='rgba(12,20,40,.65)';circ(0,0,15,'rgba(12,20,40,.65)');
     ctx.fillStyle=col;ctx.beginPath();const d=right?1:-1;ctx.moveTo(10*d,0);ctx.lineTo(-4*d,-8);ctx.lineTo(-4*d,8);ctx.fill();
     ctx.font='700 9px Rubik,system-ui';ctx.textAlign='center';ctx.fillStyle='#fff';ctx.fillText(Math.round(Math.abs(s.x-A.p.x))+'m',0,26);ctx.restore()}
-  if(A.site&&A.site.x-cam>W+10){const y=Math.min(H-130,used.filter(u=>u.r).reduce((a,u)=>Math.max(a,u.y+42),200));ctx.save();ctx.translate(W-22,y);circ(0,0,15,'rgba(12,20,40,.65)');
+  if(A.site&&A.site.x-cam>W+10){let y=200;while(used.some(u=>u.r&&Math.abs(u.y-y)<42))y+=42;ctx.save();ctx.translate(W-22,y);circ(0,0,15,'rgba(12,20,40,.65)');
     ctx.fillStyle=A.site.ready?'#36b9ff':'#c3d0ea';ctx.fillRect(-6,-6,12,12);ctx.font='700 9px Rubik,system-ui';ctx.textAlign='center';ctx.fillStyle='#fff';ctx.fillText(Math.round(A.site.x-A.p.x)+'m',0,26);ctx.restore()}
 }
 function drawSite(){
@@ -1522,7 +1528,7 @@ function drawSite(){
   ctx.strokeStyle='#4f5d72';ctx.lineWidth=4;ctx.stroke();ctx.strokeStyle='#36b9ff';ctx.lineWidth=3;ctx.beginPath();ctx.arc(x,y,32,0,7);ctx.stroke();ctx.globalAlpha=1;
   if(B.prog<1){ctx.strokeStyle='rgba(255,201,60,.85)';ctx.lineWidth=2;for(let i=-40;i<=40;i+=20){ctx.beginPath();ctx.moveTo(x+i,y-48);ctx.lineTo(x+i,y+48);ctx.stroke()}ctx.beginPath();ctx.moveTo(x-48,y);ctx.lineTo(x+48,y);ctx.stroke()}
   ctx.strokeStyle='#2b3240';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(x+56,y-20);ctx.lineTo(x+56,y-74);ctx.stroke();ctx.fillStyle='#2f8cff';ctx.beginPath();ctx.moveTo(x+56,y-74);ctx.lineTo(x+86,y-64);ctx.lineTo(x+56,y-54);ctx.fill();
-  const label=B.prog>=1?'FORWARD BUNKER':B.started?`BUILDING ${Math.round(B.prog*100)}%${B.inZone?'':' · RETURN TO SITE'}`:B.ready?'BUILD SITE · DRIVE IN':'BUILD SITE · CLEAR OUTPOSTS FIRST';
+  const label=B.prog>=1?'FORWARD BUNKER':B.started?`BUILDING ${Math.round(B.prog*100)}%${!B.inZone?' · RETURN TO SITE':B.blockers?' · CLEAR THE SITE':''}`:B.ready?'BUILD SITE · DRIVE IN':'BUILD SITE · CLEAR OUTPOSTS FIRST';
   ctx.font='800 12px Rubik,system-ui';ctx.textAlign='center';ctx.lineJoin='round';ctx.lineWidth=3.5;ctx.strokeStyle='rgba(20,24,40,.8)';ctx.strokeText(label,x,y-B.r-16);ctx.fillStyle=B.ready?'#bfe6ff':'#fff';ctx.fillText(label,x,y-B.r-16);
 }
 function drawMinimap(){
@@ -1537,7 +1543,7 @@ function drawMinimap(){
 }
 function drawStick(){
   if(!isTouch&&!A.stick)return;
-  const s=A.stick||{ox:240,oy:H-100,x:240,y:H-100};
+  const s=A.stick||{ox:W-190,oy:H-110,x:W-190,y:H-110};
   ctx.globalAlpha=A.stick?.9:.35;ctx.strokeStyle='rgba(255,255,255,.7)';ctx.lineWidth=3;circ(s.ox,s.oy,50,'rgba(12,20,40,.35)',true);
   const dx=s.x-s.ox,dy=s.y-s.oy,l=Math.hypot(dx,dy),m=Math.min(l,50),kx=l?s.ox+dx/l*m:s.ox,ky=l?s.oy+dy/l*m:s.oy;
   circ(kx,ky,22,'rgba(54,185,255,.85)');
@@ -1548,7 +1554,8 @@ function drawStick(){
 // ---------- chapter 2 input ----------
 const ptr={stick:null,aim:null};
 cv.addEventListener('pointerdown',ev=>{if(mode!==2||!A.running||A.paused||A.result)return;const q=toGame(ev);
-  if(ev.pointerType==='touch'&&q.x<W*.45&&ptr.stick===null){ptr.stick=ev.pointerId;A.stick={ox:q.x,oy:q.y,x:q.x,y:q.y}}
+  if(ev.pointerType==='touch'&&q.x>W*.3&&ptr.stick===null){ptr.stick=ev.pointerId;A.stick={ox:q.x,oy:q.y,x:q.x,y:q.y}}
+  else if(ev.pointerType==='touch'){return}
   else{ptr.aim=ev.pointerId;A.aimS=q;A.firing=true}
   try{cv.setPointerCapture(ev.pointerId)}catch(e){}});
 cv.addEventListener('pointermove',ev=>{if(mode!==2)return;const q=toGame(ev);
