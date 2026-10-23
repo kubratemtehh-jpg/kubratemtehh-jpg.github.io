@@ -44,6 +44,7 @@ bdi.f{font-family:var(--f-mono);font-weight:600;color:var(--phos);font-size:14px
 #idock{position:absolute;bottom:calc(env(safe-area-inset-bottom,0px) + 10px);left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:14px;padding:8px 12px}
 .ev{width:66px;height:66px;padding:0;border-radius:50%;display:grid;place-items:center;border:2px solid rgba(255,255,255,.22);touch-action:manipulation;transition:opacity .2s,transform .1s}
 .ev.bolt{background:radial-gradient(circle at 35% 30%,#3d5fa8,#1a2550 75%);color:#e3eeff}
+.ev.engulf{background:radial-gradient(circle at 35% 30%,#7a4fc4,#2a1650 75%);color:#e9dcff}
 .ev.meteor{background:radial-gradient(circle at 35% 30%,#b8541c,#4a1c0a 75%);color:#ffd9a8}
 .ev:active{transform:scale(.92)}
 .ev.alert{animation:alertP 1s infinite}
@@ -61,6 +62,8 @@ bdi.f{font-family:var(--f-mono);font-weight:600;color:var(--phos);font-size:14px
 #bAlbum.new::after{content:'';position:absolute;top:-4px;right:-4px;width:10px;height:10px;border-radius:50%;background:var(--phos);box-shadow:0 0 8px var(--phos)}
 #album{background:rgba(13,11,24,.95)}
 #album h2{font-size:clamp(30px,8vw,40px)}
+#album .inner{max-height:calc(100% - 24px);overflow:auto;padding-block:8px}
+#album .orb{width:44px;height:44px}
 #albumGrid{display:grid;gap:16px;width:100%}
 .arow{display:grid;gap:8px;justify-items:center}
 .arow>span{font-size:13px;color:var(--ink-dim)}
@@ -172,6 +175,7 @@ bdi.f{font-family:var(--f-mono);font-weight:600;color:var(--phos);font-size:14px
   <div id="idock" class="card" hidden>
     <button id="bBolt" class="ev bolt" type="button"><svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true"><path d="M13.5 2 4.5 13.5h6.5L9.5 22l9-12h-6.5z" fill="currentColor"/></svg></button>
     <button id="bMeteor" class="ev meteor" type="button"><svg viewBox="0 0 24 24" width="32" height="32" aria-hidden="true"><path d="M2.5 4.5l9 6.5M5 2l8.5 8.5M2 8l8.5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" opacity=".55" fill="none"/><circle cx="15.5" cy="15.5" r="6" fill="currentColor"/><circle cx="13.6" cy="14" r="1.4" fill="#2a1408" opacity=".45"/><circle cx="17.4" cy="17.4" r="1" fill="#2a1408" opacity=".45"/></svg></button>
+    <button id="bEngulf" class="ev engulf" type="button" hidden><svg viewBox="0 0 24 24" width="32" height="32" aria-hidden="true"><circle cx="14" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="14" cy="12" r="2.2" fill="currentColor" opacity=".5"/><rect x="1.5" y="9.6" width="9.5" height="4.8" rx="2.4" fill="currentColor"/></svg></button>
     <button id="bKeep" class="ch keep" type="button" aria-label="Keep" hidden>✓</button>
     <button id="bAgain" class="ch again" type="button" dir="ltr" hidden><span>×2</span></button>
     <button id="bDrop" class="ch drop" type="button" aria-label="Remove" hidden>✕</button>
@@ -253,9 +257,9 @@ const STR={
   episodes:'اپیزودها',ep1:'۱ · سنتز بنیادین',ep2:'۲ · تکامل زنده',go2:'ادامه: تکامل زنده',
   ep2Title:'تبار تو زنده است',
   ep2Text:'رعد و برق یا شهاب‌سنگ بفرست تا ترکیب تغییر کند. تاس و سکه نتیجه را تعیین می‌کنند و انتخاب آخر با توست.',
-  idleStep:(e,m)=>`دوران ${e} از ${m}`,idleHint:'رعد و برق یا شهاب‌سنگ بفرست. تاس و سکهٔ بالا خودشان می‌چرخند. اگر تغییر ماند، با ✓ یا ✕ انتخاب کن.',bolt:'رعد و برق',meteor:'شهاب‌سنگ',album:'کشف‌ها',albumClose:'بستن',newRare:'کشف تازه!',
-  done:'مرحلهٔ ۱ کامل شد',heads:'شیر',tails:'خط',grew:n=>`در غیاب تو ${n} بخش تازه رشد کرد`,
-  helpIdle:[['شکل هدف','سایهٔ کم‌رنگ پشت ترکیب، شکل کامل این دوران است؛ هر تکهٔ تازه یکی از جاهایش را پر می‌کند.'],['موج اسیدی','اگر موج سبز نزدیک شد، رعد و برق بزن: از بین می‌رود و انرژی‌اش یک تکهٔ تازه می‌دهد. اگر برسد، یک تکه را می‌سوزاند.'],['ضربهٔ کامل','وقتی حلقهٔ آبی روی دایرهٔ کم‌رنگ نشست و طلایی شد، بزن: تاس بهتر و شانس کشف بیشتر.'],['×۲','بعد از شیر می‌توانی دوباره سکه بیندازی. هر شیر تغییر را بزرگ‌تر می‌کند؛ یک خط همه را محو می‌کند.'],['کشف‌ها','تکه‌های طلایی، فسفری و بلورین کمیاب‌اند و در آلبوم ثبت می‌شوند.'],['رعد و برق','انرژی؛ تغییرهای کوچک‌تر.'],['شهاب‌سنگ','ماده و ضربه از فضا؛ تغییرهای بزرگ‌تر، هم سود و هم آسیب.'],['تاس','نوع تغییر را تعیین می‌کند.'],['سکه','شیر: تغییر می‌ماند. خط: محو می‌شود.'],['✓ / ✕','تغییرِ مانده را نگه دار یا حذف کن.'],['زمان','وقتی بازی بسته است، ترکیب آرام رشد می‌کند.']],
+  idleStep:(s,e,m)=>`مرحلهٔ ${s} · دوران ${e} از ${m}`,stage2:'مرحلهٔ ۲ · همزیستی',engulf:'بلعیدن',idleHint:'رعد و برق یا شهاب‌سنگ بفرست. تاس و سکهٔ بالا خودشان می‌چرخند. اگر تغییر ماند، با ✓ یا ✕ انتخاب کن.',bolt:'رعد و برق',meteor:'شهاب‌سنگ',album:'کشف‌ها',albumClose:'بستن',newRare:'کشف تازه!',
+  done:'مرحلهٔ ۲ کامل شد',heads:'شیر',tails:'خط',grew:n=>`در غیاب تو ${n} بخش تازه رشد کرد`,
+  helpIdle:[['بلعیدن','در دوران همزیستی، وقتی باکتری کنار یاخته است بزن تا آن را ببلعی. اگر بماند، درون یاخته می‌ماند و انرژی می‌سازد.'],['شکل هدف','سایهٔ کم‌رنگ پشت ترکیب، شکل کامل این دوران است؛ هر تکهٔ تازه یکی از جاهایش را پر می‌کند.'],['موج اسیدی','اگر موج سبز نزدیک شد، رعد و برق بزن: از بین می‌رود و انرژی‌اش یک تکهٔ تازه می‌دهد. اگر برسد، یک تکه را می‌سوزاند.'],['ضربهٔ کامل','وقتی حلقهٔ آبی روی دایرهٔ کم‌رنگ نشست و طلایی شد، بزن: تاس بهتر و شانس کشف بیشتر.'],['×۲','بعد از شیر می‌توانی دوباره سکه بیندازی. هر شیر تغییر را بزرگ‌تر می‌کند؛ یک خط همه را محو می‌کند.'],['کشف‌ها','تکه‌های طلایی، فسفری و بلورین کمیاب‌اند و در آلبوم ثبت می‌شوند.'],['رعد و برق','انرژی؛ تغییرهای کوچک‌تر.'],['شهاب‌سنگ','ماده و ضربه از فضا؛ تغییرهای بزرگ‌تر، هم سود و هم آسیب.'],['تاس','نوع تغییر را تعیین می‌کند.'],['سکه','شیر: تغییر می‌ماند. خط: محو می‌شود.'],['✓ / ✕','تغییرِ مانده را نگه دار یا حذف کن.'],['زمان','وقتی بازی بسته است، ترکیب آرام رشد می‌کند.']],
   freeHint:'آزادانه مولکول بسازید؛ هر مولکول پایدار در مخزن ثبت می‌شود.',
   stepDone:n=>`گام کامل شد: ${n}`,made:(n,f)=>`${n} ساخته شد · ${f}`,
   reserve:'ذخیره',reserveHint:'هرچه لازم دارید پایین بکشید',parked:'به ذخیره رفت',
@@ -281,9 +285,9 @@ const STR={
   episodes:'Episodes',ep1:'1 · Prebiotic Broth',ep2:'2 · Living evolution',go2:'Continue: living evolution',
   ep2Title:'Your lineage is alive',
   ep2Text:'Send lightning or a meteorite to change the compound. The die and coin decide the outcome, and the final choice is yours.',
-  idleStep:(e,m)=>`Era ${e} of ${m}`,idleHint:'Send lightning or a meteorite. The die and coin up top spin on their own. If the change stays, pick ✓ or ✕.',bolt:'Lightning',meteor:'Meteorite',album:'Discoveries',albumClose:'Close',newRare:'New find!',
-  done:'Stage 1 complete',heads:'Heads',tails:'Tails',grew:n=>`${n} new part${n==1?'':'s'} grew while you were away`,
-  helpIdle:[['Target shape','The faint shadow behind the compound is this era’s finished shape; every new part fills one of its spots.'],['Acid wave','When the green wave drifts in, send lightning: it breaks up and its energy gives you a free part. If it reaches the compound, it burns one part.'],['Perfect strike','Fire when the blue ring lands on the faint circle and turns gold: a better roll and a better chance of a rare find.'],['×2','After heads you can flip again. Each heads makes the change bigger; one tails wipes it all.'],['Discoveries','Golden, phosphor and crystal parts are rare and go into your album.'],['Lightning','Energy; smaller changes.'],['Meteorite','Matter and impact from space; bigger changes, both good and bad.'],['Die','Sets the kind of change.'],['Coin','Heads: the change stays. Tails: it fades.'],['✓ / ✕','Keep or remove a change that stayed.'],['Time','While the game is closed, the compound slowly grows.']],
+  idleStep:(s,e,m)=>`Stage ${s} · Era ${e} of ${m}`,stage2:'Stage 2 · Symbiosis',engulf:'Engulf',idleHint:'Send lightning or a meteorite. The die and coin up top spin on their own. If the change stays, pick ✓ or ✕.',bolt:'Lightning',meteor:'Meteorite',album:'Discoveries',albumClose:'Close',newRare:'New find!',
+  done:'Stage 2 complete',heads:'Heads',tails:'Tails',grew:n=>`${n} new part${n==1?'':'s'} grew while you were away`,
+  helpIdle:[['Engulf','In the Symbiosis era, tap while the bacterium is beside your cell to swallow it. If it stays, it lives inside and makes energy.'],['Target shape','The faint shadow behind the compound is this era’s finished shape; every new part fills one of its spots.'],['Acid wave','When the green wave drifts in, send lightning: it breaks up and its energy gives you a free part. If it reaches the compound, it burns one part.'],['Perfect strike','Fire when the blue ring lands on the faint circle and turns gold: a better roll and a better chance of a rare find.'],['×2','After heads you can flip again. Each heads makes the change bigger; one tails wipes it all.'],['Discoveries','Golden, phosphor and crystal parts are rare and go into your album.'],['Lightning','Energy; smaller changes.'],['Meteorite','Matter and impact from space; bigger changes, both good and bad.'],['Die','Sets the kind of change.'],['Coin','Heads: the change stays. Tails: it fades.'],['✓ / ✕','Keep or remove a change that stayed.'],['Time','While the game is closed, the compound slowly grows.']],
   freeHint:'Build freely. Every stable molecule is added to your collection.',
   stepDone:n=>`Step complete: ${n}`,made:(n,f)=>`${n} formed · ${f}`,
   reserve:'Reserve',reserveHint:'drag down what you need',parked:'Moved to reserve',
@@ -449,7 +453,7 @@ function applyLang(){
   document.querySelectorAll('[data-i]').forEach(el=>{el.textContent=S(el.dataset.i)});
   document.querySelectorAll('[data-lang]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.lang===save.lang));
   document.querySelectorAll('.el').forEach(b=>b.setAttribute('aria-label',ELN[b.dataset.el][save.lang]));
-  $('tray').hidden=ep===2;$('idock').hidden=ep!==2;$('chance').hidden=ep!==2;$('bBolt').setAttribute('aria-label',S('bolt'));$('bMeteor').setAttribute('aria-label',S('meteor'));
+  $('tray').hidden=ep===2;$('idock').hidden=ep!==2;$('chance').hidden=ep!==2;$('bBolt').setAttribute('aria-label',S('bolt'));$('bEngulf').setAttribute('aria-label',S('engulf'));$('bMeteor').setAttribute('aria-label',S('meteor'));
   document.querySelectorAll('[data-ep]').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.ep===ep));
   $('helpList').innerHTML=S(ep===2?'helpIdle':'helpItems').map(([d,t])=>`<dt>${d}</dt><dd>${t}</dd>`).join('');
   $('bSound').textContent=save.sound?S('on'):S('off');$('bSound').setAttribute('aria-pressed',save.sound);
@@ -749,23 +753,44 @@ function render(){
 const ERAS=[
  {name:{fa:'دوران زنجیره‌ها',en:'Age of Chains'},goal:14,hues:[38,170]},
  {name:{fa:'جهان RNA',en:'RNA World'},goal:16,hues:[4,38,140,208]},
- {name:{fa:'پیش‌یاخته',en:'Protocell'},goal:14,hues:[175,200,150,290]}
+ {name:{fa:'پیش‌یاخته',en:'Protocell'},goal:14,hues:[175,200,150,290]},
+ {name:{fa:'لوکا',en:'LUCA'},goal:14,hues:[200,140,40,330]},
+ {name:{fa:'دوشاخه شدن',en:'The Great Split'},goal:14,hues:[12,32,350]},
+ {name:{fa:'دوران اکسیژن',en:'Age of Oxygen'},goal:16,hues:[190,170,210,40]},
+ {name:{fa:'همزیستی',en:'Symbiosis'},goal:14,hues:[300,330,20]}
 ];
+let bact=null,bactT=90,sister=null,cyans=[];
+function drawRod(x,y,ang,len,w,col,a,t){ctx.save();ctx.globalAlpha=a;ctx.translate(x,y);ctx.rotate(ang);
+  ctx.strokeStyle=col;ctx.lineWidth=1.5;ctx.beginPath();for(let k=0;k<=12;k++){const xx=-len/2-k*len*.06,yy=Math.sin(k*.9+t*.25)*w*.35;k?ctx.lineTo(xx,yy):ctx.moveTo(-len/2,0)}ctx.stroke();
+  const g=ctx.createLinearGradient(0,-w/2,0,w/2);g.addColorStop(0,'#c9f5ec');g.addColorStop(1,col);ctx.fillStyle=g;
+  ctx.beginPath();ctx.moveTo(-len/2+w/2,-w/2);ctx.lineTo(len/2-w/2,-w/2);ctx.arc(len/2-w/2,0,w/2,-Math.PI/2,Math.PI/2);ctx.lineTo(-len/2+w/2,w/2);ctx.arc(-len/2+w/2,0,w/2,Math.PI/2,Math.PI*1.5);ctx.fill();
+  ctx.strokeStyle='rgba(13,11,24,.35)';ctx.lineWidth=1;ctx.stroke();ctx.restore()}
+function drawCellE(cx,cy,R,t,prog){
+  const e=EV.era,MR=R*.92,arch=e>=4,mb=arch?'240,150,120':'174,214,241';ctx.save();
+  const mg=ctx.createRadialGradient(cx-MR*.3,cy-MR*.3,1,cx,cy,MR);mg.addColorStop(0,`rgba(${mb},.13)`);mg.addColorStop(1,`rgba(${mb},.05)`);ctx.fillStyle=mg;
+  ctx.beginPath();for(let i=0;i<=64;i++){const q=i/64*6.283,rr=MR*(1+Math.sin(q*3+t*.04)*.02+Math.sin(q*5-t*.03)*.012);i?ctx.lineTo(cx+Math.cos(q)*rr,cy+Math.sin(q)*rr):ctx.moveTo(cx+rr,cy)}ctx.closePath();ctx.fill();
+  ctx.strokeStyle=`rgba(${mb},.8)`;ctx.lineWidth=5;ctx.stroke();ctx.strokeStyle=`rgba(${mb},.32)`;ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(cx,cy,MR-8,0,6.28);ctx.stroke();
+  if(arch){ctx.strokeStyle=`rgba(${mb},.55)`;ctx.lineWidth=2;for(let k=0;k<54;k++){const q=k/54*6.283+t*.001,r1=MR+3,r2=MR+8+Math.sin(t*.05+k)*1.5;ctx.beginPath();ctx.moveTo(cx+Math.cos(q)*r1,cy+Math.sin(q)*r1);ctx.lineTo(cx+Math.cos(q)*r2,cy+Math.sin(q)*r2);ctx.stroke()}}
+  const dr=e===3?R*.5:R*.2,da=e===3?.75:.35;ctx.strokeStyle=`rgba(190,160,255,${da})`;ctx.lineWidth=2;
+  for(const sg of[1,-1]){ctx.beginPath();for(let i=0;i<=90;i++){const q=i/90*6.283,rr=dr+sg*Math.sin(q*16+t*.05)*4;i?ctx.lineTo(cx+Math.cos(q)*rr,cy+Math.sin(q)*rr):ctx.moveTo(cx+rr,cy)}ctx.stroke()}
+  ctx.fillStyle='rgba(236,230,245,.32)';for(let k=0;k<16;k++){const q=k*2.4+t*.002,rr=MR*(.12+.7*((k*37)%10)/10);ctx.beginPath();ctx.arc(cx+Math.cos(q)*rr,cy+Math.sin(q)*rr,1.7,0,6.28);ctx.fill()}
+  if(e===6){const a=EV.done?1:.15+prog*.6;ctx.strokeStyle=`rgba(205,175,255,${a})`;ctx.fillStyle=`rgba(160,120,230,${a*.18})`;ctx.lineWidth=3;ctx.beginPath();ctx.arc(cx,cy,R*.2,0,6.28);ctx.fill();ctx.stroke()}
+  ctx.restore()}
 const GROW_MS=30*60e3,GROW_MAX=4;
 let EV=null,pend=null,phase='idle',fadeT=0,morphT=0,evoGlow=0,lastSave=0,gambling=false,pops=[],shakeT=0,wobble=0,acid=null,acidT=1500,burnT=0;
 const RARE=[{c:'#F1C40F',hi:'#fff6c8',name:{fa:'طلایی',en:'Golden'}},{c:'#5dfc8f',hi:'#e8ffee',name:{fa:'فسفری',en:'Phosphor'}},{c:'#9fdcff',hi:'#ffffff',name:{fa:'بلورین',en:'Crystal'}}];
 const RING_MS=1500,ringQ=()=>(performance.now()%RING_MS)/RING_MS,ringR=R=>R*(1.6-.7*ringQ());
 function inPerfect(){const L=layout(EV.parts.length);return Math.abs(ringR(L.R)-L.R)<L.R*.05}
 function pop(txt,col,size){const L=layout(EV.parts.length);pops.push({txt,col:col||'#F1C40F',size:size||34,x:L.cx,y:L.cy-L.R*.62,life:70})}
-function maybeRare(list,ch){for(const p of list)if(p.rare==null&&!p.f&&Math.random()<ch){p.rare=Math.floor(Math.random()*3);p.s=false}}
+function maybeRare(list,ch){for(const p of list)if(p.rare==null&&!p.f&&!p.m&&Math.random()<ch){p.rare=Math.floor(Math.random()*3);p.s=false}}
 const L2=o=>o[save.lang]||o.en;
 const pickHue=()=>{const h=ERAS[EV.era].hues;return h[Math.floor(Math.random()*h.length)]};
 function seedParts(){return [0,1,2].map(()=>({h:pickHue(),f:false,s:false,b:frame}))}
 function evoInit(){
   if(!save.evo){save.evo={era:0,parts:[],last:Date.now(),done:false};EV=save.evo;EV.parts=seedParts()}
-  EV=save.evo;EV.album=EV.album||{};EV.parts.forEach(p=>p.b=-999);growOffline();
+  EV=save.evo;EV.album=EV.album||{};if(EV.done&&EV.era===2){EV.done=false;EV.era=3;EV.parts=seedParts()}EV.parts.forEach(p=>p.b=-999);growOffline();
 }
-const score=()=>EV.parts.reduce((a,p)=>a+(p.f?0:p.rare!=null?3:p.s?2:1),0);
+const score=()=>EV.parts.reduce((a,p)=>a+(p.f?0:p.rare!=null?3:(p.s||p.m)?2:1),0);
 const progress=()=>Math.min(100,score()/ERAS[EV.era].goal*100);
 function growOffline(){
   const away=Date.now()-EV.last,n=Math.min(GROW_MAX,Math.floor(away/GROW_MS));
@@ -795,7 +820,7 @@ const PIPS={1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
 function setDie(f){$('die').innerHTML=[...Array(9)].map((_,i)=>`<i class="${PIPS[f].includes(i)?'on':''}"></i>`).join('')}
 function dockState(){
   const ch=phase==='choose'||(phase==='flipping'&&gambling);
-  $('bBolt').hidden=$('bMeteor').hidden=ch;$('bKeep').hidden=$('bDrop').hidden=!ch;
+  $('bBolt').hidden=$('bMeteor').hidden=ch;$('bEngulf').hidden=ch||!EV||EV.era!==6||EV.done;$('bEngulf').disabled=phase!=='idle'||!!morphT||!bact||bact.st!=='roam';$('bKeep').hidden=$('bDrop').hidden=!ch;
   const ag=ch&&pend&&pend.base&&pend.base.length>0&&pend.mult<5;$('bAgain').hidden=!ag;
   if(ag)$('bAgain').firstElementChild.textContent='×'+num(pend.mult+1);
   $('bKeep').disabled=$('bDrop').disabled=$('bAgain').disabled=phase!=='choose';
@@ -806,11 +831,25 @@ function boltPath(tx,ty){const pts=[],sx=tx+(Math.random()-.5)*W*.35,n=13;for(le
 function trigger(kind){
   if(phase!=='idle'||morphT||!EV)return;ensureAudio();const perfect=inPerfect();phase='strike';dockState();resetCoin();
   const L=layout(EV.parts.length),a=Math.random()*6.28,d=Math.random()*L.R*.4,tx=L.cx+Math.cos(a)*d,ty=L.cy+Math.sin(a)*d;
+  if(kind==='engulf'){if(!bact||bact.st!=='roam'||EV.era!==6){phase='idle';dockState();return}const L=layout(EV.parts.length),q=Math.atan2(bact.y-L.cy,bact.x-L.cx);bact.st='in';
+    strike={kind,t:0,dur:55,sx:bact.x,sy:bact.y,tx:L.cx+Math.cos(q)*L.R*.4,ty:L.cy+Math.sin(q)*L.R*.4,perfect};tone('sine',260,90,.6,.22);tone('sine',140,70,.5,.12,.2);buzz([15,40,25]);
+    if(perfect){pop('★','#bfe9ff',52);tone('sine',1320,0,.5,.12)}return}
   if(kind==='bolt'&&acid){strike={kind,t:0,dur:26,tx:acid.x,ty:acid.y,pts:boltPath(acid.x,acid.y),zap:true,perfect:false};tone('sawtooth',150,38,.4,.2);tone('triangle',2600,500,.14,.08);buzz(25);acid.dying=1;$('bBolt').classList.remove('alert');return}
   if(kind==='bolt'){strike={kind,t:0,dur:30,tx,ty,pts:boltPath(tx,ty)};tone('sawtooth',150,38,.4,.2);tone('triangle',2600,500,.14,.08);buzz(25)}
   else{const l=Math.random()<.5;strike={kind,t:0,dur:50,tx,ty,sx:l?-30:W+30,sy:-30};tone('sine',1100,180,.6,.05)}
   strike.perfect=perfect;
   if(perfect){pop('★','#bfe9ff',52);tone('sine',1320,0,.5,.12);tone('sine',1760,0,.6,.09,.09);buzz([10,30,10]);burst(L.cx,L.cy-L.R,24,'#bfe9ff')}
+}
+function makeEngulf(f){
+  const P=EV.parts,plain=P.map((p,i)=>i).filter(i=>!P[i].f&&!P[i].s&&!P[i].m),mk=x=>Object.assign({h:pickHue(),f:false,s:false,m:true,a:Math.random()*6.28,b:frame},x||{}),np=()=>({h:pickHue(),f:false,s:false,b:frame});
+  const one=()=>plain.length?[plain[Math.floor(Math.random()*plain.length)]]:[];
+  const c={face:f,add:[],flaw:[],heal:[],rec:null};
+  if(f===1)c.flaw=one();
+  if(f===2){c.add=[mk()];c.flaw=one()}
+  if(f===3||f===4)c.add=[mk()];
+  if(f===5)c.add=[mk(),np()];
+  if(f===6)c.add=[mk(),mk({s:true})];
+  return c;
 }
 function makeMeteor(f){
   const P=EV.parts,plain=P.map((p,i)=>i).filter(i=>!P[i].f&&!P[i].s),np=()=>({h:pickHue(),f:false,s:false,b:frame});
@@ -827,7 +866,7 @@ function rollAuto(kind,perfect){
   phase='rolling';const d=$('die');d.classList.add('roll');let n=0;
   const iv=setInterval(()=>{setDie(1+Math.floor(Math.random()*6));tone('triangle',300+Math.random()*200,0,.03,.04);
     if(++n>(reduce?2:10)){clearInterval(iv);d.classList.remove('roll');const f=perfect?3+Math.floor(Math.random()*4):1+Math.floor(Math.random()*6);setDie(f);
-      pend=kind==='meteor'?makeMeteor(f):makeChange(f);pend.mult=1;maybeRare(pend.add,perfect?.3:.1);
+      pend=kind==='meteor'?makeMeteor(f):kind==='engulf'?makeEngulf(f):makeChange(f);pend.mult=1;maybeRare(pend.add,perfect?.3:.1);
       if(!Object.keys(EV.album).length&&(EV.keeps||0)>=2&&pend.add.length&&!pend.add.some(q=>q.rare!=null))pend.add[0].rare=Math.floor(Math.random()*3);pend.base=pend.add.map(p=>Object.assign({},p,{rare:undefined}));
       tone('sine',180,90,.2,.15);buzz(10);setTimeout(()=>flipAuto(false),reduce?200:1000)}},60);
 }
@@ -858,11 +897,12 @@ function startMorph(){if(morphT||EV.done)return;morphT=1;phase='morph';dockState
 /* ---- HUD ---- */
 function hudIdle(){
   if(!EV)return;const E=ERAS[EV.era],p=EV.done?100:progress();
-  $('step').textContent=S('idleStep')(num(EV.era+1),num(ERAS.length));
+  const st=EV.era<3?0:1,eras=st?[3,4,5,6]:[0,1,2],li=eras.indexOf(EV.era);
+  $('step').textContent=S('idleStep')(num(st+1),num(li+1),num(eras.length));
   $('goalName').textContent=EV.done?S('done'):L2(E.name);
   $('goalF').textContent=EV.done?'':`${num(Math.floor(p))}%`;
   $('hintBox').textContent=S('idleHint');
-  $('prog').innerHTML=ERAS.map((e,i)=>i<EV.era||EV.done?'<i class="done"></i>':i===EV.era?`<i style="background:linear-gradient(to ${save.lang==='fa'?'left':'right'},var(--phos) ${p}%,rgba(236,230,245,.1) ${p}%)"></i>`:'<i></i>').join('');
+  $('prog').innerHTML=eras.map((ei,i)=>i<li||EV.done?'<i class="done"></i>':i===li?`<i style="background:linear-gradient(to ${save.lang==='fa'?'left':'right'},var(--phos) ${p}%,rgba(236,230,245,.1) ${p}%)"></i>`:'<i></i>').join('');
 }
 
 /* ---- simulation & drawing ---- */
@@ -872,13 +912,20 @@ function stepIdle(){
   pops.forEach(q=>{q.y-=.5;q.life--});pops=pops.filter(q=>q.life>0);
   if(phase==='fading'&&--fadeT<=0){pend=null;phase='idle';dockState()}
   if(strike){const k=strike;k.t++;
+    if(k.kind==='engulf'&&bact){const q=Math.min(1,k.t/k.dur),e=q*q*(3-2*q);bact.x=k.sx+(k.tx-k.sx)*e;bact.y=k.sy+(k.ty-k.sy)*e;bact.sc=1-q*.45;if(k.t===k.dur-2){burst(k.tx,k.ty,22,'#c8a6ff');evoGlow=30;wobble=24}}
+    if(k.kind==='engulf'&&k.t>=k.dur){bact=null;bactT=220}
     if(k.kind==='bolt'){if(k.t===1){burst(k.tx,k.ty,26,'#d6e8ff');evoGlow=30}if(k.t%6===0&&k.t<k.dur-8)k.pts=boltPath(k.tx,k.ty)}
-    else if(k.t===30){shakeT=18;burst(k.tx,k.ty,40,'#f08a3c');burst(k.tx,k.ty,20,'#F1C40F');tone('sine',70,28,.9,.55);tone('triangle',320,60,.4,.15);buzz([40,30,20]);evoGlow=45}
+    else if(k.kind==='meteor'&&k.t===30){shakeT=18;burst(k.tx,k.ty,40,'#f08a3c');burst(k.tx,k.ty,20,'#F1C40F');tone('sine',70,28,.9,.55);tone('triangle',320,60,.4,.15);buzz([40,30,20]);evoGlow=45}
     if(k.t>=k.dur){strike=null;
       if(k.zap){acid=null;acidT=1800+Math.random()*1500;burst(k.tx,k.ty,40,'#a6e05a');EV.parts.push({h:pickHue(),f:false,s:false,b:frame});
         pop('+'+num(1),'#a6e05a',40);sfxChord(false);evoGlow=40;wobble=30;phase='idle';dockState();persist();hud();if(progress()>=100&&!EV.done)setTimeout(startMorph,700)}
       else rollAuto(k.kind,k.perfect)}}
   // acid wave: drifts in only while the player is free to act; lightning breaks it up
+  if(EV.era===6&&!EV.done){const L=layout(EV.parts.length);
+    if(!bact&&phase==='idle'&&!morphT&&--bactT<=0){const q=Math.random()*6.28;bact={q,d:2.1,st:'roam',ph:0,sc:1,x:0,y:0};tone('sine',520,700,.3,.05);dockState()}
+    if(bact&&bact.st==='roam'){bact.q+=.0035;bact.ph+=.05;bact.d+=(1.08-bact.d)*.02;const d=L.R*(bact.d+Math.sin(bact.ph*.4)*.05);
+      bact.x=Math.max(28,Math.min(W-28,L.cx+Math.cos(bact.q)*d));bact.y=Math.max(topB+20,Math.min(botB-20,L.cy+Math.sin(bact.q)*d));if(frame%20===0)dockState()}}
+  if(sister){sister.t++;if(sister.t>260)sister=null}
   const plainIdx=EV.parts.map((q,i)=>i).filter(i=>!EV.parts[i].f);
   if(!acid&&phase==='idle'&&!morphT&&!EV.done&&(EV.keeps||0)>=3&&plainIdx.length>=3&&--acidT<=0){
     const L=layout(EV.parts.length),left=Math.random()<.5;acid={x:left?-70:W+70,y:L.cy+(Math.random()-.5)*L.R*.6,dir:left?1:-1,ph:Math.random()*6,bub:[]};
@@ -894,7 +941,7 @@ function stepIdle(){
   if(burnT>0)burnT--;
   if(morphT){morphT++;
     if(morphT===70){flashes.push({x:W/2,y:(topB+botB)/2,life:50});sfxChord(true);buzz([30,60,30]);
-      if(EV.era<ERAS.length-1){EV.era++;EV.parts=seedParts();toast(L2(ERAS[EV.era].name),2400)}else{EV.done=true}
+      if(EV.era<ERAS.length-1){EV.era++;EV.parts=seedParts();toast(EV.era===3?S('stage2'):L2(ERAS[EV.era].name),EV.era===3?3600:2400);if(EV.era===4)sister={t:0};if(EV.era===6){bact=null;bactT=60}}else{EV.done=true}
       persist();hud()}
     if(morphT>=140){morphT=0;phase='idle';dockState()}}
   if(Date.now()-lastSave>10000){lastSave=Date.now();EV.last=Date.now();persist()}
@@ -907,6 +954,9 @@ function partPos(i,L,t){
   const{cx,cy,R,slots}=L;
   if(EV.era===0){const th=i*.62+t*.002,r=R*(.1+.85*Math.sqrt(i/slots));return[cx+Math.cos(th)*r+Math.sin(t*.03+i)*2,cy+Math.sin(th)*r+Math.cos(t*.03+i)*2]}
   if(EV.era===1){const sp=R*1.9/slots,y=cy+(i-(L.n-1)/2)*sp,x=cx-R*.12+Math.sin(i*.55+t*.012)*R*.3;return[x,y]}
+  if(EV.era===3){const th=i/slots*6.283+t*.003;return[cx+Math.cos(th)*R*.5,cy+Math.sin(th)*R*.5]}
+  if(EV.era===4){const th=i/slots*6.283-t*.002;return[cx+Math.cos(th)*R*.74,cy+Math.sin(th)*R*.74]}
+  if(EV.era===6){const r=R*(.32+.42*Math.sqrt((i+.5)/slots)),th=i*2.39996+t*.0015;return[cx+Math.cos(th)*r,cy+Math.sin(th)*r]}
   const r=R*.74*Math.sqrt((i+.5)/slots),th=i*2.39996+t*.0015;return[cx+Math.cos(th)*r,cy+Math.sin(th)*r];
 }
 function partColor(p,a){if(p.rare!=null&&!p.f)return RARE[p.rare].c;return p.f?`rgba(110,100,130,${a})`:`hsla(${p.h},68%,${p.s?62:58}%,${a})`}
@@ -914,6 +964,12 @@ function drawPart(x,y,r,p,a,t,mode){
   r=Math.max(1,r);ctx.save();ctx.globalAlpha=a;
   if(p.s||mode){const gr=ctx.createRadialGradient(x,y,r*.5,x,y,r*2.2),col=mode==='flaw'?'231,76,60':mode==='heal'?'88,214,141':'241,196,15';
     gr.addColorStop(0,`rgba(${col},.35)`);gr.addColorStop(1,`rgba(${col},0)`);ctx.fillStyle=gr;ctx.beginPath();ctx.arc(x,y,r*2.2,0,6.28);ctx.fill()}
+  if(p.m&&!p.f&&p.rare==null){const an=(p.a||0)+Math.sin(t*.02+(p.a||0))*.2;ctx.translate(x,y);ctx.rotate(an);
+    const g=ctx.createRadialGradient(-r*.4,-r*.3,1,0,0,r*1.4);g.addColorStop(0,'#ffd2b8');g.addColorStop(1,'#e8664a');ctx.fillStyle=g;
+    ctx.beginPath();ctx.ellipse(0,0,r*1.4,r*.8,0,0,6.28);ctx.fill();ctx.strokeStyle='rgba(120,30,20,.55)';ctx.lineWidth=1.3;ctx.stroke();
+    ctx.beginPath();ctx.moveTo(-r*1.05,0);for(let k=0;k<=8;k++)ctx.lineTo(-r*1.05+k*r*.26,(k%2?-1:1)*r*.42);ctx.stroke();
+    if(mode){ctx.globalAlpha=a*(.55+Math.sin(t*.15)*.45);ctx.strokeStyle=mode==='flaw'?'#E74C3C':'#F1C40F';ctx.lineWidth=2.5;ctx.setLineDash(mode==='ghost'?[4,4]:[]);ctx.beginPath();ctx.ellipse(0,0,r*1.4+6,r*.8+6,0,0,6.28);ctx.stroke()}
+    ctx.restore();return}
   const RR=p.rare!=null&&!p.f?RARE[p.rare]:null;
   if(RR){const gr=r*2.6*(p.rare===1?1+Math.sin(t*.12)*.18:1),gl=ctx.createRadialGradient(x,y,r*.4,x,y,gr);gl.addColorStop(0,RR.c+'99');gl.addColorStop(1,RR.c+'00');ctx.fillStyle=gl;ctx.beginPath();ctx.arc(x,y,gr,0,6.28);ctx.fill()}
   const g=ctx.createRadialGradient(x-r*.35,y-r*.35,1,x,y,r);g.addColorStop(0,p.f?'#8d84a3':RR?RR.hi:`hsl(${p.h},75%,82%)`);g.addColorStop(1,partColor(p,1));
@@ -933,6 +989,9 @@ function renderIdle(t){
   const br=(1+Math.sin(t*.035)*.025+(evoGlow/50)*.04)*(1+Math.sin(wobble*.45)*wobble/40*.07);
   const shx=shakeT&&!reduce?(Math.random()-.5)*shakeT*.9:0,shy=shakeT&&!reduce?(Math.random()-.5)*shakeT*.9:0;
   let ms=1;if(morphT){ms=morphT<70?1-morphT/70:(morphT-70)/70;ms=Math.max(.02,ms)}
+  if(EV.era>=5){if(!cyans.length)for(let k=0;k<5;k++)cyans.push({x:Math.random()*W,y:topB+Math.random()*(botB-topB),v:.15+Math.random()*.2,a:Math.random()*6.28,s:.6+Math.random()*.5});
+    for(const c of cyans){c.x+=c.v;c.a+=.004;if(c.x>W+40)c.x=-40;drawRod(c.x,c.y+Math.sin(t*.01+c.a)*10,c.a,22*c.s,8*c.s,'#5fbf55',.35,t);
+      if((frame+((c.a*100)|0))%50===0)bubbles.push({x:c.x,y:c.y,r:1.2+Math.random()*1.5,vy:-.4-Math.random()*.4,w:Math.random()*6.28})}}
   ctx.save();ctx.translate(cx+shx,cy+shy);ctx.scale(br*ms,br*ms);ctx.translate(-cx,-cy);
   const prog=progress()/100;
   // halo
@@ -940,7 +999,7 @@ function renderIdle(t){
   const pts=[];for(let i=0;i<n;i++)pts.push(partPos(i,L,t));
   {const goal=L.goal,rs=Math.max(9,Math.min(19,R*(EV.era===2?.08:.1)));if(n<goal&&!morphT){ctx.save();
     const sh=[];for(let i=n;i<goal;i++)sh.push(partPos(i,L,t));
-    if(EV.era!==2){ctx.setLineDash([2,6]);ctx.strokeStyle='rgba(236,230,245,.13)';ctx.lineWidth=2;ctx.beginPath();const st=n?pts[n-1]:sh[0];ctx.moveTo(st[0],st[1]);sh.forEach(q=>ctx.lineTo(q[0],q[1]));ctx.stroke();ctx.setLineDash([])}
+    if(EV.era<2){ctx.setLineDash([2,6]);ctx.strokeStyle='rgba(236,230,245,.13)';ctx.lineWidth=2;ctx.beginPath();const st=n?pts[n-1]:sh[0];ctx.moveTo(st[0],st[1]);sh.forEach(q=>ctx.lineTo(q[0],q[1]));ctx.stroke();ctx.setLineDash([])}
     sh.forEach(([x,y],j)=>{const nx=j===0,a=nx?.35+Math.sin(t*.1)*.2:.14;ctx.strokeStyle=`rgba(236,230,245,${a})`;ctx.lineWidth=nx?2:1.5;ctx.setLineDash(nx?[]:[3,4]);ctx.beginPath();ctx.arc(x,y,rs*(EV.era===1?.7:1),0,6.28);ctx.stroke()});
     ctx.restore()}}
   let r=Math.max(10,Math.min(21,R*(EV.era===2?.09:.11)));if(EV.era===1)r=Math.min(r,R*1.9/L.slots*.46);
@@ -952,6 +1011,7 @@ function renderIdle(t){
       if(!p.f){ctx.globalAlpha=a*.45;ctx.strokeStyle=`hsl(${(p.h+180)%360},60%,60%)`;ctx.beginPath();ctx.moveTo(x+r*3.1,y);ctx.lineTo(x+r*5.2,y);ctx.stroke()}ctx.globalAlpha=1}
     ctx.strokeStyle='hsla(280,45%,78%,.85)';ctx.lineWidth=r*.45;ctx.beginPath();pts.slice(0,P.length).forEach((q,i)=>i?ctx.lineTo(...q):ctx.moveTo(...q));ctx.stroke();
     if(ghosts.length&&P.length){ctx.strokeStyle=`rgba(241,196,15,${ga*.7})`;ctx.setLineDash([5,6]);ctx.beginPath();ctx.moveTo(...pts[P.length-1]);pts.slice(P.length).forEach(q=>ctx.lineTo(...q));ctx.stroke();ctx.setLineDash([])}}
+  if(EV.era>=3)drawCellE(cx,cy,R,t,prog);
   if(EV.era===2){const MR=R*.92,thick=3+prog*5;
     const mg=ctx.createRadialGradient(cx-MR*.3,cy-MR*.3,1,cx,cy,MR);mg.addColorStop(0,'rgba(120,200,230,.10)');mg.addColorStop(1,'rgba(52,152,219,.06)');ctx.fillStyle=mg;
     ctx.beginPath();for(let i=0;i<=48;i++){const q=i/48*6.283,rr=MR*(1+Math.sin(q*3+t*.04)*.02);i?ctx.lineTo(cx+Math.cos(q)*rr,cy+Math.sin(q)*rr):ctx.moveTo(cx+rr,cy)}ctx.closePath();ctx.fill();
@@ -966,8 +1026,11 @@ function renderIdle(t){
   ctx.restore();
   if(acid){const a=acid,dy=a.dying?Math.max(0,1-(a.dying++)/20):1,w=1+Math.sin(a.ph)*.08;ctx.save();ctx.globalAlpha=dy;
     for(let k=0;k<3;k++){const ox=Math.sin(a.ph*.7+k*2)*14,oy=Math.cos(a.ph*.9+k)*10,rr=(48+k*14)*w,g=ctx.createRadialGradient(a.x+ox,a.y+oy,0,a.x+ox,a.y+oy,rr);
-      g.addColorStop(0,'rgba(175,225,70,.5)');g.addColorStop(.6,'rgba(115,170,40,.24)');g.addColorStop(1,'rgba(80,120,30,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(a.x+ox,a.y+oy,rr,0,6.28);ctx.fill()}
-    ctx.strokeStyle='rgba(200,240,110,.5)';a.bub.forEach(b=>{ctx.globalAlpha=dy*b.l/40;ctx.lineWidth=1;ctx.beginPath();ctx.arc(b.x,b.y,b.r,0,6.28);ctx.stroke()});ctx.restore()}
+      const oxy=EV.era>=5;g.addColorStop(0,oxy?'rgba(205,235,255,.5)':'rgba(175,225,70,.5)');g.addColorStop(.6,oxy?'rgba(120,185,240,.24)':'rgba(115,170,40,.24)');g.addColorStop(1,oxy?'rgba(80,140,220,0)':'rgba(80,120,30,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(a.x+ox,a.y+oy,rr,0,6.28);ctx.fill()}
+    ctx.strokeStyle=EV.era>=5?'rgba(220,240,255,.6)':'rgba(200,240,110,.5)';a.bub.forEach(b=>{ctx.globalAlpha=dy*b.l/40;ctx.lineWidth=1;ctx.beginPath();ctx.arc(b.x,b.y,b.r,0,6.28);ctx.stroke()});ctx.restore()}
+  if(bact&&EV.era===6){const ang=Math.atan2(cy-bact.y,cx-bact.x)+Math.sin(t*.04)*.3,len=R*.34*(bact.sc||1);drawRod(bact.x,bact.y,ang,len,len*.38,'#48C9B0',1,t);
+    if(bact.st==='roam'&&phase==='idle'){ctx.save();ctx.strokeStyle=`rgba(200,170,255,${.35+Math.sin(t*.1)*.25})`;ctx.lineWidth=2;ctx.setLineDash([3,5]);ctx.beginPath();ctx.arc(bact.x,bact.y,len*.75,0,6.28);ctx.stroke();ctx.restore()}}
+  if(sister){const q=sister.t/260,e=q*q,len=R*.38,x=cx+R*.35+e*(W*.6),y=cy-R*.1-e*R*.3,a=q<.1?q*10:1-Math.max(0,(q-.7)/.3);drawRod(x,y,-.25,len,len*.38,'#48C9B0',Math.max(0,a),t)}
   if(burnT>0){ctx.save();ctx.globalAlpha=burnT/40*.25;ctx.fillStyle='#E74C3C';ctx.fillRect(0,0,W,H);ctx.restore()}
   if(phase==='idle'&&!morphT){const rr=ringR(R),ok=Math.abs(rr-R)<R*.05,q=ringQ();ctx.save();
     ctx.setLineDash([3,7]);ctx.strokeStyle=ok?'rgba(241,196,15,.6)':'rgba(236,230,245,.2)';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(cx,cy,R,0,6.28);ctx.stroke();ctx.setLineDash([]);
@@ -983,6 +1046,7 @@ function renderIdle(t){
       ctx.strokeStyle=`rgba(150,195,255,${a*.45})`;ctx.lineWidth=10;ctx.stroke();ctx.strokeStyle=`rgba(248,251,255,${a})`;ctx.lineWidth=2.6;ctx.stroke();
       const g=ctx.createRadialGradient(k.tx,k.ty,0,k.tx,k.ty,170);g.addColorStop(0,`rgba(205,228,255,${a*.5})`);g.addColorStop(1,'rgba(205,228,255,0)');ctx.fillStyle=g;ctx.fillRect(k.tx-170,k.ty-170,340,340);
       if(k.t<4&&!reduce){ctx.fillStyle=`rgba(220,235,255,${.22-k.t*.05})`;ctx.fillRect(0,0,W,H)}}
+    else if(k.kind==='engulf'){const q=k.t/k.dur;ctx.strokeStyle=`rgba(200,170,255,${1-q})`;ctx.lineWidth=3;ctx.beginPath();ctx.arc(k.tx,k.ty,10+q*R*.3,0,6.28);ctx.stroke()}
     else if(k.t<30){const q=k.t/30,e=q*q,x=k.sx+(k.tx-k.sx)*e,y=k.sy+(k.ty-k.sy)*e,an=Math.atan2(k.ty-k.sy,k.tx-k.sx),tl=50+q*90;
       const g=ctx.createLinearGradient(x,y,x-Math.cos(an)*tl,y-Math.sin(an)*tl);g.addColorStop(0,'rgba(255,210,140,.95)');g.addColorStop(1,'rgba(255,110,30,0)');
       ctx.strokeStyle=g;ctx.lineWidth=8;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-Math.cos(an)*tl,y-Math.sin(an)*tl);ctx.stroke();
@@ -995,7 +1059,7 @@ function renderIdle(t){
 }
 function idleDown(e){const p=ptr(e),cx=W/2,cy=(topB+botB)/2,R=Math.min(W-48,botB-topB-60)/2;
   if(Math.hypot(p.x-cx,p.y-cy)<R){evoGlow=40;tone('sine',520+Math.random()*200,0,.5,.06);buzz(6)}}
-$('bBolt').onclick=()=>trigger('bolt');$('bMeteor').onclick=()=>trigger('meteor');$('bKeep').onclick=()=>choose(true);$('bAgain').onclick=again;
+$('bBolt').onclick=()=>trigger('bolt');$('bEngulf').onclick=()=>trigger('engulf');$('bMeteor').onclick=()=>trigger('meteor');$('bKeep').onclick=()=>choose(true);$('bAgain').onclick=again;
 function renderAlbum(){const a=(EV&&EV.album)||{};let found=0;
   $('albumGrid').innerHTML=ERAS.map((e,ei)=>`<div class="arow"><span>${L2(e.name)}</span><div>${RARE.map((r,k)=>{const n=a[ei*3+k];if(n)found++;return n?`<i class="orb" style="--c:${r.c};--h:${r.hi}" title="${L2(r.name)}"><b>${num(n)}</b></i>`:'<i class="orb off">?</i>'}).join('')}</div></div>`).join('');
   $('albumCount').textContent=save.lang==='fa'?`${num(found)} از ${num(ERAS.length*RARE.length)}`:`${found} of ${ERAS.length*RARE.length}`}
@@ -1003,7 +1067,7 @@ $('bAlbum').onclick=()=>{ensureAudio();renderAlbum();$('album').hidden=false;$('
 $('bAlbumClose').onclick=()=>{$('album').hidden=true};$('album').onclick=e=>{if(e.target.id==='album')$('album').hidden=true};$('bDrop').onclick=()=>choose(false);
 document.addEventListener('visibilitychange',()=>{if(!EV)return;if(document.hidden){EV.last=Date.now();persist()}else if(ep===2){growOffline();hud()}});
 function resetWorld(){
-  atoms=[];bonds=[];reacting.clear();reaction=null;recompute();drag=null;sparks=[];arcs=[];pend=null;phase='idle';morphT=0;strike=null;gambling=false;pops=[];acid=null;acidT=1500;$('album').hidden=true;$('bBolt').classList.remove('alert');
+  atoms=[];bonds=[];reacting.clear();reaction=null;recompute();drag=null;sparks=[];arcs=[];pend=null;phase='idle';morphT=0;strike=null;gambling=false;pops=[];acid=null;acidT=1500;bact=null;bactT=90;sister=null;cyans=[];$('album').hidden=true;$('bBolt').classList.remove('alert');
   if(ep===2){evoInit();setDie(5);resetCoin();dockState()}else populate();
 }
 function setEpisode(n,card){
