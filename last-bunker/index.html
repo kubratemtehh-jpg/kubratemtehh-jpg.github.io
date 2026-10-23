@@ -207,7 +207,7 @@ button:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
         <div class="chap">
           <svg viewBox="0 0 24 24" fill="#ff8a3d"><rect x="3" y="9" width="15" height="9" rx="3"/><circle cx="10" cy="13.5" r="3.4" fill="#ffc93c"/><rect x="12" y="12.2" width="10" height="2.6" rx="1.2"/><rect x="2" y="17" width="17" height="3" rx="1.5" fill="#c4561c"/></svg>
           <span class="tag">Chapter 2 · Preview mission</span><h2>Iron Fist</h2>
-          <p>Take the fight to the enemy. Drive an armored vehicle through their land, destroy towers and depots, then their HQ.</p>
+          <p>Take the fight to the enemy. Drive an armored vehicle through their land, destroy towers and depots, then build a forward bunker.</p>
           <span class="stars" id="ch2Stars"></span>
           <button class="go" id="assaultBtn" type="button">Attack</button>
         </div>
@@ -236,7 +236,7 @@ button:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
   </div>
   <div class="menu" id="winMenu" hidden>
     <div class="card">
-      <h1>Outpost Cleared</h1>
+      <h1>Bunker Built</h1>
       <div class="starsBig" id="winStars"></div>
       <p id="winInfo"></p>
       <p id="winTips"></p>
@@ -480,13 +480,13 @@ function reset(cfg){
      ammo:GUNS[0].mag,reloading:0,wave:1,waveLeft:0,spawnT:1.5,waveBreak:0,cool:0,canT:0,misT:0,airT:0,canAng:0,misAng:0,canKick:0,
      enemies:[],bullets:[],shells:[],missiles:[],bombs:[],planes:[],eshots:[],parts:[],marks:[],blasts:[],texts:[],
      aim:{x:W*.55,y:BK.y},firing:false,running:true,paused:false,shake:0,recoil:0,outT:0,flash:0,hurt:0,muzzle:0};
-  FX=S;if(cfg)applyArsenal(cfg.stage);else BK.r=FORTS[0].r;startWave(cfg?cfg.wave0:1);updHud();
+  FX=S;if(cfg)applyArsenal(cfg.stage,cfg.fortBonus);else BK.r=FORTS[0].r;startWave(cfg?cfg.wave0:1);updHud();
 }
 const gun=()=>GUNS[S.gun];
 const live=()=>S.running&&!S.paused;
-function applyArsenal(st){
+function applyArsenal(st,bonus){
   S.stage=st;for(let i=0;i<=st;i++){const q=STAGES[i];if(q.k==='gun')S.gun=q.lv;else if(q.k==='cannon')S.cannon=q.lv;else if(q.k==='missile')S.missile=q.lv;else S.air=q.lv}
-  S.ammo=GUNS[S.gun].mag;S.fort=FORTS.reduce((a,f,i)=>f.stage<=st?i:a,0);const F=FORTS[S.fort];S.maxHp=S.hp=F.hp;BK.r=F.r;S.shield=F.shield||0;
+  S.ammo=GUNS[S.gun].mag;S.fort=Math.min(FORTS.length-1,FORTS.reduce((a,f,i)=>f.stage<=st?i:a,0)+(bonus||0));const F=FORTS[S.fort];S.maxHp=S.hp=F.hp;BK.r=F.r;S.shield=F.shield||0;
 }
 function startWave(n){
   S.wave=n;
@@ -1028,11 +1028,10 @@ let PV=JSON.parse(JSON.stringify(PV0));
 const MAP2={
  walls:[[640,150,90,22,'sand'],[640,370,90,22,'sand'],[880,200,22,90,'sand'],
   [1300,40,40,170,'conc'],[1300,330,40,170,'conc'],[1500,200,120,22,'sand'],[1680,90,24,120,'conc'],
-  [2150,330,110,24,'sand'],[2300,120,24,110,'conc'],[2480,360,24,120,'conc'],
-  [3000,40,30,160,'conc'],[3000,340,30,160,'conc'],[3000,40,560,26,'conc'],[3000,474,560,26,'conc'],[3534,40,26,460,'conc']],
+  [2150,330,110,24,'sand'],[2300,120,24,110,'conc'],[2480,360,24,120,'conc']],
  towers:[[960,120],[1760,400],[2420,140]],
  depots:[[1620,440],[2600,440]],
- hq:[3330,270],WW:3600,compound:[3000,40,560,460],door:[3070,270],hpMul:1,phase:0,seed:23,
+ site:[3200,270],WW:3600,compound:null,hpMul:1,phase:0,seed:23,
  barrels:[[700,230],[1380,280],[1450,110],[2230,300],[2700,150],[3100,220],[3100,330]],
  repairs:[[1150,470],[2050,80],[2850,460]],
  enemies:[['soldier',720,110],['soldier',720,420],['gunner',930,330],['soldier',1020,250],['gunner',1080,430],['soldier',1100,150],
@@ -1050,24 +1049,26 @@ function buildGround2(M,T){
   M=M||curM2||MAP2;T=T||curT2||THEMES.desert;curM2=M;curT2=T;
   G2S=Math.min(1.5,DPR);ground2.width=M.WW*G2S;ground2.height=H*G2S;
   const g=ground2.getContext('2d');g.setTransform(G2S,0,0,G2S,0,0);
-  const R=mulberry(M.seed||23),r=(a,b)=>a+R()*(b-a),cx=M.compound[0];
+  const R=mulberry(M.seed||23),r=(a,b)=>a+R()*(b-a),cx=M.compound?M.compound[0]:M.site[0];
   let gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,T.base[0]);gr.addColorStop(1,T.base[1]);g.fillStyle=gr;g.fillRect(0,0,M.WW,H);
   for(let i=0;i<M.WW/21;i++){const x=r(0,M.WW),y=r(0,H),rad=r(40,130),k=R();
     const b=g.createRadialGradient(x,y,0,x,y,rad);b.addColorStop(0,k<.45?T.blobs[0]:k<.85?T.blobs[1]:'rgba(255,255,255,.12)');b.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=b;g.fillRect(x-rad,y-rad,rad*2,rad*2)}
   const rY=x=>{const k=clamp((x-(cx-420))/420,0,1);return roadY(x,M.phase)*(1-k)+270*k};
-  const free=(x,y,m)=>!M.walls.some(([wx,wy,ww,wh])=>x>wx-m&&x<wx+ww+m&&y>wy-m&&y<wy+wh+m)&&!(x>cx-20&&x<cx+580&&y>20&&y<520)&&Math.abs(y-rY(x))>50;
+  const free=(x,y,m)=>!M.walls.some(([wx,wy,ww,wh])=>x>wx-m&&x<wx+ww+m&&y>wy-m&&y<wy+wh+m)&&(M.compound?!(x>cx-20&&x<cx+580&&y>20&&y<520):dist(x,y,M.site[0],M.site[1])>130)&&Math.abs(y-rY(x))>50;
   groundExtras(g,T,R,320,cx-40,free);
   g.lineCap='round';g.lineJoin='round';
-  const road=(o=0)=>{g.beginPath();for(let x=0;x<=cx+20;x+=20){const y=rY(x)+o;x?g.lineTo(x,y):g.moveTo(x,y)}};
+  const road=(o=0)=>{g.beginPath();for(let x=0;x<=(M.compound?cx+20:M.WW);x+=20){const y=rY(x)+o;x?g.lineTo(x,y):g.moveTo(x,y)}};
   road();g.strokeStyle=T.road[0];g.lineWidth=82;g.stroke();
   road();g.strokeStyle=T.road[1];g.lineWidth=68;g.stroke();
   for(const o of(T.extra==='city'?[0]:[-14,14])){road(o);g.strokeStyle=T.road[2];g.lineWidth=T.extra==='city'?3:4;g.setLineDash(T.extra==='city'?[18,14]:[14,9]);g.stroke()}
   g.setLineDash([]);
-  const [fx,fy,fw,fh]=M.compound;
+  if(M.compound){const [fx,fy,fw,fh]=M.compound;
   g.fillStyle='#cfd5de';g.fillRect(fx,fy,fw,fh);g.strokeStyle='#b8c0cc';g.lineWidth=1.5;
   for(let x=fx;x<=fx+fw;x+=40){g.beginPath();g.moveTo(x,fy);g.lineTo(x,fy+fh);g.stroke()}
-  for(let y=fy;y<=fy+fh;y+=40){g.beginPath();g.moveTo(fx,y);g.lineTo(fx+fw,y);g.stroke()}
-  g.fillStyle='rgba(255,77,94,.85)';for(let i=0;i<6;i++){g.beginPath();g.moveTo(fx+40+i*16,262);g.lineTo(fx+52+i*16,270);g.lineTo(fx+40+i*16,278);g.fill()}
+  for(let y=fy;y<=fy+fh;y+=40){g.beginPath();g.moveTo(fx,y);g.lineTo(fx+fw,y);g.stroke()}}
+  else{const [sx,sy]=M.site;g.fillStyle='rgba(0,0,0,.18)';g.beginPath();g.arc(sx+6,sy+8,116,0,7);g.fill();g.fillStyle='#d3d9e2';g.beginPath();g.arc(sx,sy,114,0,7);g.fill();
+    g.strokeStyle='#b4bdca';g.lineWidth=2;for(let k=-100;k<=100;k+=40){g.beginPath();g.moveTo(sx+k,sy-Math.sqrt(114*114-k*k));g.lineTo(sx+k,sy+Math.sqrt(114*114-k*k));g.stroke();g.beginPath();g.moveTo(sx-Math.sqrt(114*114-k*k),sy+k);g.lineTo(sx+Math.sqrt(114*114-k*k),sy+k);g.stroke()}
+    g.fillStyle='rgba(54,140,255,.85)';for(let i=0;i<6;i++){g.beginPath();g.moveTo(sx-170+i*16,262);g.lineTo(sx-158+i*16,270);g.lineTo(sx-170+i*16,278);g.fill()}}
   for(const [bx,by,bw,bh] of(M.bridges||[])){g.fillStyle='rgba(0,0,0,.25)';g.fillRect(bx-8,by+4,bw+16,bh);g.fillStyle='#9a6a3c';g.fillRect(bx-10,by,bw+20,bh);g.strokeStyle='#6e4826';g.lineWidth=2;
     for(let x=bx-10;x<bx+bw+10;x+=11){g.beginPath();g.moveTo(x,by);g.lineTo(x,by+bh);g.stroke()}g.fillStyle='#5a3a1e';g.fillRect(bx-12,by-4,bw+24,5);g.fillRect(bx-12,by+bh-1,bw+24,5)}
   homeStrip(g);
@@ -1093,10 +1094,11 @@ function startAssault(cfg){
   A={camp:cfg,M,nT:M.towers.length,nD:M.depots.length,running:true,paused:false,time:0,kills:0,credits:0,cam:0,shake:0,flash:0,hurt:0,
     p:{x:260,y:270,r:PV.r,hp:PV.hp,ang:0,tur:0,tread:0},
     aimS:{x:520,y:270},aim:{x:520,y:270},firing:false,heat:0,over:0,cool:0,canT:0,misT:0,recoil:0,muzzle:0,stick:null,
-    walls:M.walls.map(([x,y,w,h,t],i)=>({x,y,w,h,t,i,hp:cfg&&t==='sand'?70:0})),lastHit:0,flow:{t:4,maxX:260},strikes:[],intensity:0,
+    walls:M.walls.map(([x,y,w,h,t],i)=>({x,y,w,h,t,i,hp:cfg&&t==='sand'?70:0})),lastHit:0,flow:{t:4,maxX:260,budget:cfg?Math.round(12+(M.diff||0)*10):14},strikes:[],intensity:0,
     structs:[...M.towers.map(([x,y])=>({kind:'tower',x,y,r:22,hp:60*hm,max:60*hm,armor:2,tur:Math.PI,atk:1,range:380,hit:0,awake:false,side:1})),
       ...M.depots.map(([x,y])=>({kind:'depot',x,y,r:26,hp:50*hm,max:50*hm,armor:0,hit:0})),
-      {kind:'hq',x:M.hq[0],y:M.hq[1],r:52,hp:(M.hqHp||500)*hm,max:(M.hqHp||500)*hm,armor:3,hit:0,atk:1,spawnT:3,awake:false,tur:[Math.PI,Math.PI],dish:0}],
+      ...(M.hq?[{kind:'hq',x:M.hq[0],y:M.hq[1],r:52,hp:(M.hqHp||500)*hm,max:(M.hqHp||500)*hm,armor:3,hit:0,atk:1,spawnT:3,awake:false,tur:[Math.PI,Math.PI],dish:0}]:[])],
+    site:M.site?{x:M.site[0],y:M.site[1],r:120,prog:0,started:false,ready:false,wave:0,waveT:1}:null,
     barrels:M.barrels.map(([x,y])=>({x,y,r:11,hp:6})),
     pickups:M.repairs.map(([x,y])=>({x,y})),
     enemies:M.enemies.map(([k,x,y])=>mk(k,x,y)),
@@ -1104,8 +1106,8 @@ function startAssault(cfg){
   A.mk=mk;FX=A;setWeather(cfg?cfg.weather:'clear');
   $('hud1').hidden=true;$('hud2').hidden=false;
   for(const id of['startMenu','overMenu','winMenu','failMenu','pauseMenu','campEnd'])$(id).hidden=true;
-  toastQ=[];toast(cfg?'Attack '+cfg.name:'Operation Iron Fist',cfg?`${T.label} · ${LAYOUT2[M.layout]||'Open ground'} · ${WXNAME[cfg.weather]}`:'Destroy the towers and depots, then the HQ');
-  if(cfg)toast('Push forward','Reinforcements grow the deeper you go');
+  toastQ=[];toast(cfg?'Attack '+cfg.name:'Operation Iron Fist',cfg?`${T.label} · ${LAYOUT2[M.layout]||'Open ground'} · ${WXNAME[cfg.weather]}`:'Enemy territory ahead');
+  toast('Push forward','Clear the outposts, then build a forward bunker at the site');
   toast(isTouch?'Left thumb drives':'WASD to drive',isTouch?'Right thumb aims and fires':'Mouse to aim · hold to fire · Q cannon · E missiles');
   updHud2();
 }
@@ -1152,7 +1154,7 @@ function kill2(t){
     if(t.kind==='tower'){cr=50;blast(t.x,t.y,60);toast('Gun tower destroyed',towersLeft()?`${towersLeft()} left`:'All towers down')}
     if(t.kind==='depot'){cr=60;explode2(t.x,t.y,120,70,true);toast('Ammo depot destroyed',depotsLeft()?`${depotsLeft()} left`:'All depots down')}
     if(t.kind==='hq'){cr=200;A.flash=.8;for(let i=0;i<7;i++)A.chain.push({t:i*.25,x:t.x+rnd(-50,50),y:t.y+rnd(-50,50)});A.result='win';A.endT=2.6;toast('HQ destroyed','Outpost cleared')}
-    if(t.kind!=='hq'&&!hqShielded())toast('HQ shield is down','Destroy the command HQ');
+    if(t.kind!=='hq'&&!hqShielded())toast(A.site?'Outposts cleared':'HQ shield is down',A.site?'Drive into the build site':'Destroy the command HQ');
   }else{
     A.kills++;cr=t.pts*5;
     if(t.r>=14){blast(t.x,t.y,t.r*2.2);debris(t.x,t.y,14);boom(.13,.5)}else{puff(t.x,t.y,PAL[t.k][0],8,'spark');beep(220,.05,'triangle',.03)}
@@ -1192,12 +1194,10 @@ function missiles2(){
   beep(360,.25,'sawtooth',.03);updHud2();
 }
 function spawnRush(){
-  const d=A.M.diff||0,I=A.intensity,p=A.p,cx=A.M.compound[0];
-  const pool=[['soldier',40],['gunner',18],['jeep',d>.05?14:0],['heavy',I>.35?10:0],['tank',d>.25&&I>.5?6:0],['heli',d>.35&&I>.4?6:0]].filter(q=>q[1]>0);
+  const d=A.M.diff||0,I=A.intensity;
+  const pool=[['soldier',44],['gunner',18],['jeep',d>.05?12:0],['heavy',I>.4?8:0],['tank',d>.3&&I>.55?4:0],['heli',d>.4&&I>.45?5:0]].filter(q=>q[1]>0);
   let t=rnd(0,pool.reduce((a,q)=>a+q[1],0)),k='soldier';for(const [kk,w] of pool){if((t-=w)<=0){k=kk;break}}
-  for(let tries=0;tries<8;tries++){let x,y;
-    if(Math.random()<.75){x=Math.min(A.cam+W+rnd(30,150),WW-40);y=rnd(40,H-40);if(p.x<cx&&x>cx-40)x=cx-rnd(40,160)}
-    else{x=clamp(p.x+rnd(-120,280),40,WW-40);y=Math.random()<.5?14:H-14}
+  for(let tries=0;tries<10;tries++){const x=Math.min(A.cam+W+rnd(30,150),WW-30),y=rnd(40,H-40);
     if(!E2[k].air&&A.walls.some(w=>x>w.x-E2[k].r&&x<w.x+w.w+E2[k].r&&y>w.y-E2[k].r&&y<w.y+w.h+E2[k].r))continue;
     const e=A.mk(k,x,y);e.awake=true;e.rush=true;A.enemies.push(e);return}
 }
@@ -1220,6 +1220,7 @@ function update2(dt){
   collideWalls(p,p.r);
   for(const s of A.structs)if(!s.dead)pushOut(p,s.x,s.y,s.r);
   p.x=clamp(p.x,p.r,WW-p.r);p.y=clamp(p.y,p.r,H-p.r);
+  if(A.site){const fl=A.structs.reduce((m,q)=>!q.dead&&q.kind!=='hq'?Math.min(m,q.x):m,1e9);if(p.x>fl-80){p.x=fl-80;if(!A.lineMsg||A.time-A.lineMsg>3){A.lineMsg=A.time;A.texts.push({x:p.x,y:p.y-36,t:'Destroy the outpost ahead',life:1.4,big:true})}}}
   A.cam+=(clamp(p.x-W*.38,0,WW-W)-A.cam)*Math.min(1,dt*5);
   A.aim={x:A.aimS.x+A.cam,y:A.aimS.y};
   p.tur+=clamp(angDiff(Math.atan2(A.aim.y-p.y,A.aim.x-p.x),p.tur),-10*dt,10*dt);
@@ -1270,9 +1271,10 @@ function update2(dt){
     e.x+=vx*e.speed*dt;e.y+=vy*e.speed*dt;e.step+=dt*e.speed*.18;
     if(!e.air){collideWalls(e,e.r);for(const s of A.structs)if(!s.dead)pushOut(e,s.x,s.y,s.r)}
     e.y=clamp(e.y,e.r,H-e.r);e.x=clamp(e.x,e.r,WW-e.r);
+    if(A.site&&e.x<p.x+90)e.x=Math.min(WW-e.r,p.x+90);
     e.atk-=dt;
     if(seen&&d<e.range&&e.atk<=0){e.atk=e.cd*rnd(.8,1.2);
-      enemyShot(e.x+Math.cos(e.ang)*(e.r+4),e.y+Math.sin(e.ang)*(e.r+4),p.x,p.y,e.big?270:330,e.dmg*(A.camp?.8:1),!!e.big);beep(e.big?70:260,.05,'sawtooth',.02)}
+      enemyShot(e.x+Math.cos(e.ang)*(e.r+4),e.y+Math.sin(e.ang)*(e.r+4),p.x,p.y,e.big?270:330,e.dmg*(A.camp?.6:1),!!e.big);beep(e.big?70:260,.05,'sawtooth',.02)}
   }
   // keep ground units from stacking
   const ge=A.enemies.filter(e=>!e.dead&&e.awake&&!e.air);
@@ -1286,7 +1288,7 @@ function update2(dt){
       if(!s.awake&&Math.abs(s.x-p.x)<700)s.awake=true;if(!s.awake||A.result==='fail')continue;
       const a=Math.atan2(p.y-s.y,p.x-s.x);s.tur+=clamp(angDiff(a,s.tur),-2.5*dt,2.5*dt);s.atk-=dt;
       const d=dist(s.x,s.y,p.x,p.y);
-      if(s.atk<=0&&d<s.range&&Math.abs(angDiff(a,s.tur))<.2&&los(s.x,s.y,p.x,p.y)){s.atk=1.1;s.side=-s.side;
+      if(s.atk<=0&&d<s.range&&p.x<s.x+40&&Math.abs(angDiff(a,s.tur))<.2&&los(s.x,s.y,p.x,p.y)){s.atk=1.1;s.side=-s.side;
         const ox=s.x+Math.cos(s.tur)*26-Math.sin(s.tur)*4*s.side,oy=s.y+Math.sin(s.tur)*26+Math.cos(s.tur)*4*s.side;
         enemyShot(ox,oy,p.x,p.y,360,6,false);beep(300,.05,'sawtooth',.02)}
     }
@@ -1306,12 +1308,18 @@ function update2(dt){
   // artillery strikes (telegraphed)
   for(const k of A.strikes){k.t-=dt;if(k.t<=0){k.gone=true;explode2(k.x,k.y,50,26,true)}}
   A.strikes=A.strikes.filter(k=>!k.gone);
-  // campaign: reinforcements pour in faster the deeper you push
-  if(A.camp&&!A.result){const F=A.flow,hq=HQ();F.maxX=Math.max(F.maxX,p.x);
-    const I=clamp((F.maxX-400)/Math.max(400,hq.x-700),0,1),tm=Math.min(1,A.time/150);A.intensity=clamp(.12+I*.6+tm*.28,0,1);
+  // reinforcements: a fixed budget, arriving faster the deeper you push
+  if(!A.result){const F=A.flow,gx=A.site?A.site.x:HQ().x;F.maxX=Math.max(F.maxX,p.x);
+    const I=clamp((F.maxX-400)/Math.max(400,gx-700),0,1),tm=Math.min(1,A.time/150);A.intensity=clamp(.12+I*.6+tm*.28,0,1);
     F.t-=dt;const alive=A.enemies.reduce((n,e)=>n+(!e.dead&&e.awake?1:0),0);
-    if(F.t<=0&&alive<34){F.t=(3.2-2.55*A.intensity)*rnd(.7,1.3);const n=1+Math.floor(Math.random()*(1+A.intensity*3.2));for(let i=0;i<n;i++)spawnRush()}
-    if(A.time-A.lastHit>2.5)p.hp=Math.min(PV.hp,p.hp+PV.hp*.03*dt)}
+    if(F.t<=0&&alive<(A.camp?14:18)&&F.budget>0){F.t=(3.4-2.4*A.intensity)*rnd(.7,1.3);const n=Math.min(F.budget,1+Math.floor(Math.random()*(1+A.intensity*2.5)));for(let i=0;i<n;i++){spawnRush();F.budget--}}
+    if(A.time-A.lastHit>2)p.hp=Math.min(PV.hp,p.hp+PV.hp*.05*dt)}
+  // build site: clear the outposts, then hold the site while the bunker goes up
+  if(A.site&&!A.result){const B=A.site,inZone=dist(p.x,p.y,B.x,B.y)<B.r;B.ready=!hqShielded();B.inZone=inZone;
+    if(B.ready&&inZone){if(!B.started){B.started=true;B.wave=A.camp?Math.round(7+(A.M.diff||0)*7):9;toast('Building the forward bunker','Stay inside the site');beep(520,.15,'triangle',.05)}
+      B.prog=Math.min(1,B.prog+dt/20);
+      if(B.prog>=1){A.result='win';A.endT=2.2;A.flash=.35;toast('Forward bunker built',A.camp?'Region captured':'Mission complete');beep(660,.15,'triangle',.06);setTimeout(()=>beep(990,.2,'triangle',.06),130)}}
+    if(B.started&&B.wave>0&&!A.result){B.waveT-=dt;if(B.waveT<=0){B.waveT=rnd(1.1,1.9);spawnRush();B.wave--}}}
   // enemy shots
   for(const s of A.eshots){s.x+=s.vx*dt;s.y+=s.vy*dt;s.life-=dt;
     if(s.life<=0){s.gone=true;continue}
@@ -1357,8 +1365,9 @@ function updHud2(){
   $('heatbar').firstElementChild.style.width=A.heat*100+'%';$('heatbar').classList.toggle('over',A.over>0);
   $('heatLbl').textContent=A.over>0?'Overheated':'Gun heat';
   $('credits').textContent=A.credits+' credits';
-  const tl=towersLeft(),dl=depotsLeft(),hq=HQ();
-  $('objList').innerHTML=`<li class="${tl?'':'done'}">Gun towers ${A.nT-tl}/${A.nT}</li><li class="${dl?'':'done'}">Ammo depots ${A.nD-dl}/${A.nD}</li><li class="${hq.dead?'done':hqShielded()?'lock':''}">Command HQ${hqShielded()?' (shielded)':''}</li>`;
+  const tl=towersLeft(),dl=depotsLeft(),hq=HQ(),B=A.site;
+  $('objList').innerHTML=`<li class="${tl?'':'done'}">Gun towers ${A.nT-tl}/${A.nT}</li><li class="${dl?'':'done'}">Ammo depots ${A.nD-dl}/${A.nD}</li>`+
+    (B?`<li class="${B.prog>=1?'done':B.ready?'':'lock'}">Build forward bunker ${Math.round(B.prog*100)}%</li>`:`<li class="${hq.dead?'done':hqShielded()?'lock':''}">Command HQ${hqShielded()?' (shielded)':''}</li>`);
   setAct2('canBtn2',A.canT,PV.can.cd,'CANNON');setAct2('misBtn2',A.misT,PV.mis.cd,'MISSILES');
 }
 function setAct2(id,t,cd,label){const b=$(id);b.classList.toggle('ready',t<=0);b.style.setProperty('--p',(100-t/cd*100)+'%');b.querySelector('b').textContent=t>0?Math.ceil(t)+'s':label}
@@ -1380,6 +1389,7 @@ function draw2(){
     ctx.strokeStyle='#8a1c2c';ctx.lineWidth=2;circ(b.x,b.y,b.r,'#ff4d5e',true);circ(b.x,b.y,b.r*.6,'#e0304a');ctx.fillStyle='#ffd25a';ctx.beginPath();ctx.moveTo(b.x,b.y-5);ctx.lineTo(b.x+4.5,b.y+3);ctx.lineTo(b.x-4.5,b.y+3);ctx.fill();
     if(b.fuse){ctx.globalCompositeOperation='lighter';drawGlow('#ffb84a',b.x,b.y,20);ctx.globalCompositeOperation='source-over'}}
   for(const w of A.walls)if(w.x+w.w>cam-20&&w.x<cam+W+20)drawWall(w);
+  if(A.site&&vis(A.site.x,200))drawSite();
   for(const s of A.structs)if(vis(s.x,120))drawStruct(s);
   for(const e of A.enemies)if(!e.dead&&!e.air&&vis(e.x))drawEnemy(e);
   if(!(A.result==='fail'&&A.endT<1.4))drawPlayer();
@@ -1500,6 +1510,20 @@ function drawIndicators(){
     ctx.save();ctx.translate(x,y);ctx.fillStyle='rgba(12,20,40,.65)';circ(0,0,15,'rgba(12,20,40,.65)');
     ctx.fillStyle=col;ctx.beginPath();const d=right?1:-1;ctx.moveTo(10*d,0);ctx.lineTo(-4*d,-8);ctx.lineTo(-4*d,8);ctx.fill();
     ctx.font='700 9px Rubik,system-ui';ctx.textAlign='center';ctx.fillStyle='#fff';ctx.fillText(Math.round(Math.abs(s.x-A.p.x))+'m',0,26);ctx.restore()}
+  if(A.site&&A.site.x-cam>W+10){const y=Math.min(H-130,used.filter(u=>u.r).reduce((a,u)=>Math.max(a,u.y+42),200));ctx.save();ctx.translate(W-22,y);circ(0,0,15,'rgba(12,20,40,.65)');
+    ctx.fillStyle=A.site.ready?'#36b9ff':'#c3d0ea';ctx.fillRect(-6,-6,12,12);ctx.font='700 9px Rubik,system-ui';ctx.textAlign='center';ctx.fillStyle='#fff';ctx.fillText(Math.round(A.site.x-A.p.x)+'m',0,26);ctx.restore()}
+}
+function drawSite(){
+  const B=A.site;if(!B)return;const x=B.x,y=B.y;
+  ctx.save();ctx.setLineDash([12,8]);ctx.lineDashOffset=-now/50;ctx.strokeStyle=B.ready?'rgba(54,185,255,.95)':'rgba(255,255,255,.55)';ctx.lineWidth=3;ctx.beginPath();ctx.arc(x,y,B.r,0,7);ctx.stroke();ctx.restore();
+  if(B.ready&&!B.started){ctx.globalCompositeOperation='lighter';drawGlow('#36b9ff',x,y,B.r*.9,.18+.1*Math.sin(now/200));ctx.globalCompositeOperation='source-over'}
+  if(B.prog>0){ctx.strokeStyle='rgba(20,30,50,.5)';ctx.lineWidth=8;ctx.beginPath();ctx.arc(x,y,B.r+9,0,7);ctx.stroke();ctx.strokeStyle='#4be38f';ctx.lineWidth=6;ctx.beginPath();ctx.arc(x,y,B.r+9,-Math.PI/2,-Math.PI/2+B.prog*Math.PI*2);ctx.stroke()}
+  ctx.globalAlpha=.25+.75*B.prog;sandbags(x,y,52,24);oct(x,y,44);const g=ctx.createLinearGradient(x-44,y-44,x+44,y+44);g.addColorStop(0,'#f4f7fb');g.addColorStop(1,'#b6c2d1');ctx.fillStyle=g;ctx.fill();
+  ctx.strokeStyle='#4f5d72';ctx.lineWidth=4;ctx.stroke();ctx.strokeStyle='#36b9ff';ctx.lineWidth=3;ctx.beginPath();ctx.arc(x,y,32,0,7);ctx.stroke();ctx.globalAlpha=1;
+  if(B.prog<1){ctx.strokeStyle='rgba(255,201,60,.85)';ctx.lineWidth=2;for(let i=-40;i<=40;i+=20){ctx.beginPath();ctx.moveTo(x+i,y-48);ctx.lineTo(x+i,y+48);ctx.stroke()}ctx.beginPath();ctx.moveTo(x-48,y);ctx.lineTo(x+48,y);ctx.stroke()}
+  ctx.strokeStyle='#2b3240';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(x+56,y-20);ctx.lineTo(x+56,y-74);ctx.stroke();ctx.fillStyle='#2f8cff';ctx.beginPath();ctx.moveTo(x+56,y-74);ctx.lineTo(x+86,y-64);ctx.lineTo(x+56,y-54);ctx.fill();
+  const label=B.prog>=1?'FORWARD BUNKER':B.started?`BUILDING ${Math.round(B.prog*100)}%${B.inZone?'':' · RETURN TO SITE'}`:B.ready?'BUILD SITE · DRIVE IN':'BUILD SITE · CLEAR OUTPOSTS FIRST';
+  ctx.font='800 12px Rubik,system-ui';ctx.textAlign='center';ctx.lineJoin='round';ctx.lineWidth=3.5;ctx.strokeStyle='rgba(20,24,40,.8)';ctx.strokeText(label,x,y-B.r-16);ctx.fillStyle=B.ready?'#bfe6ff':'#fff';ctx.fillText(label,x,y-B.r-16);
 }
 function drawMinimap(){
   const x0=W/2-170,w=340,y0=H-30,k=w/WW;
@@ -1508,6 +1532,7 @@ function drawMinimap(){
   ctx.fillStyle='rgba(255,255,255,.22)';ctx.fillRect(x0+A.cam*k,y0,W*k,14);
   for(const e of A.enemies)if(!e.dead)circ(x0+e.x*k,y0+e.y/H*14,1.3,'#ff6b78');
   for(const s of A.structs){if(s.dead)continue;circ(x0+s.x*k,y0+7,s.kind==='hq'?5:3.6,s.kind==='tower'?'#ff8a3d':s.kind==='depot'?'#ffc93c':(hqShielded()?'#a86bff':'#ff4d5e'))}
+  if(A.site){ctx.fillStyle=A.site.ready?'#36b9ff':'rgba(255,255,255,.7)';ctx.fillRect(x0+A.site.x*k-4,y0+3,8,8)}
   ctx.strokeStyle='#fff';ctx.lineWidth=1.5;circ(x0+A.p.x*k,y0+A.p.y/H*14,4,'#36b9ff',true);
 }
 function drawStick(){
@@ -1626,7 +1651,7 @@ function regionFlavor(reg){const R=mulberry(reg.seed+5),pick=a=>a[Math.floor(R()
   const l2=pick(reg.terrain==='city'?['town','town','road']:reg.terrain==='forest'?['woods','woods','river']:reg.terrain==='swamp'?['river','river','woods']:reg.terrain==='rock'||reg.terrain==='snow'?['canyon','canyon','road']:reg.terrain==='volcanic'?['canyon','road','town']:['road','river','canyon','town','woods']);
   const wx=pick(WXBY[reg.terrain]);const rx=Math.round(520+R()*120);
   return{l1:{kind:l1,rx,bridges:[Math.round(110+R()*80),Math.round(340+R()*80)]},l2,wx}}
-function saveCamp(){try{localStorage.setItem('lastBunkerCampaign',JSON.stringify({v:1,seed:C.seed,owner:C.owner,conq:C.conq,held:C.held,lost:C.lost,fails:C.fails}))}catch(e){}}
+function saveCamp(){try{localStorage.setItem('lastBunkerCampaign',JSON.stringify({v:1,seed:C.seed,built:C.built,owner:C.owner,conq:C.conq,held:C.held,lost:C.lost,fails:C.fails}))}catch(e){}}
 function loadCamp(){try{const s=JSON.parse(localStorage.getItem('lastBunkerCampaign')||'null');return s&&s.v===1&&s.owner&&s.owner.length===NREG?s:null}catch(e){return null}}
 function campaignCard(){const s=loadCamp();$('ch3Btn').textContent=s?'Continue':'Start';$('ch3New').hidden=!s;$('ch3New').textContent='New campaign';$('ch3New').dataset.arm='';
   $('ch3Info').textContent=s?`${s.owner.reduce((a,b)=>a+b,0)} of ${NREG} regions held`:''}
@@ -1636,7 +1661,7 @@ function startCampaign(fresh){
   $('startMenu').hidden=true;$('genMsg').hidden=false;
   setTimeout(()=>{
     const seed=s?s.seed:Math.floor(Math.random()*1e9);
-    C={running:true,paused:false,seed,owner:s?s.owner:new Array(NREG).fill(0),conq:s?s.conq:0,held:s?s.held:0,lost:s?s.lost:0,fails:s?s.fails:0,
+    C={running:true,paused:false,seed,built:s&&s.built?s.built:[],owner:s?s.owner:new Array(NREG).fill(0),conq:s?s.conq:0,held:s?s.held:0,lost:s?s.lost:0,fails:s?s.fails:0,
        phase:'idle',t:1.2,choice:[],target:null,attacker:null,sel:null,flash:null,battle:null};
     genWorld(seed);if(!s)C.owner[START]=1;
     if(!owned())C.owner[START]=1;
@@ -1686,8 +1711,8 @@ function startBattle(kind,id){
   C.battle={kind,id,st};C.phase='battle';C.running=false;$('hud3').hidden=true;
   if(kind==='defend'){
     const fl=regionFlavor(reg);buildGround(T,fl.l1);setWeather(fl.wx);mode=1;A.running=false;$('hud1').hidden=false;$('hud2').hidden=true;toastQ=[];
-    reset({name:reg.name,label:T.label,stage:st,wave0:Math.max(1,Math.round(st*.45+Math.max(0,st-10)*.3+reg.diff*2.5)),layout:regionFlavor(reg).l1,waves:3,ease:Math.max(.55,1-.15*(C.lossStreak||0))});
-    {const fl=regionFlavor(reg);toast('Defend '+reg.name,`${T.label} · ${LAYOUT1[fl.l1.kind]} · ${WXNAME[fl.wx]}`);toast('Survive 3 waves','')}
+    reset({name:reg.name,label:T.label,stage:st,wave0:Math.max(1,Math.round(st*.45+Math.max(0,st-10)*.3+reg.diff*2.5)),layout:regionFlavor(reg).l1,fortBonus:C.built[id]?1:0,waves:3,ease:Math.max(.55,1-.15*(C.lossStreak||0))});
+    {const fl=regionFlavor(reg);toast('Defend '+reg.name,`${T.label} · ${LAYOUT1[fl.l1.kind]} · ${WXNAME[fl.wx]}`);toast('Survive 3 waves',C.built[id]?'Your forward bunker holds this region':'')}
   }else{
     {const fl=regionFlavor(reg);startAssault({map:genAssault(reg,k,fl.l2),terrain:reg.terrain,k,name:reg.name,weather:fl.wx})}
   }
@@ -1696,7 +1721,7 @@ function campaignBattleEnd(win,info){
   const b=C.battle;if(!b)return;const reg=REG[b.id];C.battle=null;
   let title,msg;
   if(b.kind==='defend'){C.lossStreak=win?0:(C.lossStreak||0)+1;if(win){C.held++;title='Region Held';msg=`${reg.name} stays ours.`}else{C.owner[b.id]=0;C.lost++;title='Region Lost';msg=`The enemy took ${reg.name}.`}}
-  else{if(win){C.owner[b.id]=1;C.conq++;title='Region Captured';msg=`${reg.name} is now part of our territory.`}else{C.fails++;title='Attack Failed';msg=`${reg.name} is still in enemy hands.`}}
+  else{if(win){C.owner[b.id]=1;C.conq++;C.built[b.id]=1;title='Region Captured';msg=`Forward bunker built in ${reg.name}. It will defend this region one fortification level stronger.`}else{C.fails++;title='Attack Failed';msg=`${reg.name} is still in enemy hands.`}}
   const up=campStage(C.conq)>b.st?unlockText(b.st,campStage(C.conq)):'';
   const mk=Math.floor(C.conq/10),mk0=Math.floor((C.conq-(b.kind==='attack'&&win?1:0))/10);
   C.flash={id:b.id,t:2.2,good:win};C.lastResult={title,msg};
@@ -1767,7 +1792,7 @@ function draw3(){
   // markers
   const showNames=MV.zoomed;
   for(const r of REG){const x=sx(r.cx),y=sy(r.cy);if(x<-40||x>W+40||y<-40||y>H+40)continue;
-    if(C.owner[r.id]){ctx.strokeStyle='#fff';ctx.lineWidth=2;circ(x,y,r.id===START?9:6.5,r.id===START?'#ffc93c':'#2f8cff',true)}
+    if(C.owner[r.id]){ctx.strokeStyle='#fff';ctx.lineWidth=2;if(C.built[r.id]&&r.id!==START){rr(x-7,y-7,14,14,3,'#2f8cff',true);ctx.fillStyle='#fff';ctx.fillRect(x-3,y-3,6,6)}else circ(x,y,r.id===START?9:6.5,r.id===START?'#ffc93c':'#2f8cff',true)}
     else{ctx.strokeStyle='rgba(60,10,25,.8)';ctx.lineWidth=1.5;circ(x,y,4.5,'#ff4d5e',true)}
     if(C.sel===r.id){ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.setLineDash([4,4]);ctx.beginPath();ctx.arc(x,y,14,0,7);ctx.stroke();ctx.setLineDash([])}
     if(showNames||C.sel===r.id||(C.phase!=='idle'&&r.id===C.target)){ctx.lineJoin='round';ctx.font='700 11px Rubik,system-ui';ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='rgba(10,20,40,.75)';ctx.strokeText(r.name,x,y+20);ctx.fillStyle='#fff';ctx.fillText(r.name,x,y+20)}
@@ -1790,12 +1815,12 @@ campaignCard();
 // ---------- procedural assault maps for chapter 3 ----------
 function genAssault(reg,k,layout){
   const R=mulberry(reg.seed),r=(a,b)=>a+R()*(b-a),d=reg.diff,L=layout||'road';
-  const WWg=Math.round(2700+d*900),cx=WWg-600,ph=r(0,6);
-  const rY=x=>{const q=clamp((x-(cx-420))/420,0,1);return roadY(x,ph)*(1-q)+270*q};
-  const walls=[[cx,40,30,160,'conc'],[cx,340,30,160,'conc'],[cx,40,560,26,'conc'],[cx,474,560,26,'conc'],[cx+534,40,26,460,'conc']],bridges=[];
+  const WWg=Math.round(2400+d*500),sX=WWg-450,cx=sX-150,ph=r(0,6);
+  const rY=x=>{const q=clamp((x-(sX-420))/420,0,1);return roadY(x,ph)*(1-q)+270*q};
+  const walls=[],bridges=[];
   const hits=(x,y,w,h,m)=>walls.some(([wx,wy,ww,wh])=>x<wx+ww+m&&x+w>wx-m&&y<wy+wh+m&&y+h>wy-m);
   const onRoad=(x,y,w,h)=>[x,x+w/2,x+w].some(xx=>{const ry=rY(xx);return y<ry+60&&y+h>ry-60});
-  const near=(x,y,m)=>walls.some(([wx,wy,ww,wh,t])=>x>wx-m&&x<wx+ww+m&&y>wy-m&&y<wy+wh+m);
+  const near=(x,y,m)=>dist(x,y,sX,270)<130+m||walls.some(([wx,wy,ww,wh,t])=>x>wx-m&&x<wx+ww+m&&y>wy-m&&y<wy+wh+m);
   if(L==='river'){const n=2;for(let i=0;i<n;i++){const x=Math.round(900+i*(cx-1500)/(n-1||1)+r(-80,80)),b1=rY(x+35),b2=b1<270?r(380,450):r(90,160);
       const gaps=[[b1-50,b1+50],[b2-45,b2+45]].sort((a,b)=>a[0]-b[0]);let y0=0;
       for(const [g0,g1] of gaps){if(g0>y0)walls.push([x,y0,70,g0-y0,'water']);bridges.push([x,g0,70,g1-g0]);y0=g1}if(y0<H)walls.push([x,y0,70,H-y0,'water'])}}
@@ -1812,13 +1837,13 @@ function genAssault(reg,k,layout){
   kinds.forEach((kd,i)=>objs.push([kd,...place(i)]));
   const pool=[['soldier',30],['gunner',20],['jeep',d>.1?12:0],['heavy',d>.2?12:0],['tank',d>.3?10:0],['heli',d>.45?8:0]].filter(q=>q[1]>0);
   const pickE=()=>{let t=r(0,pool.reduce((a,q)=>a+q[1],0));for(const [kk,w] of pool){if((t-=w)<=0)return kk}return'soldier'};
-  const enemies=[],nE=Math.round(12+d*12);
-  for(let i=0,tries=0;i<nE&&tries<400;tries++){const kk=pickE(),inside=i>=nE-3,x=inside?r(cx+60,cx+500):r(650,cx-60),y=inside?r(90,H-90):r(40,H-40);
-    if(near(x,y,E2[kk].r+6)||(inside&&dist(x,y,cx+330,270)<70))continue;enemies.push([kk,x,y]);i++}
-  const barrels=[];for(let i=0,t=0;i<6+Math.round(d*4)&&t<100;t++){const x=r(600,WWg-80),y=r(40,H-40);if(near(x,y,20)||dist(x,y,cx+330,270)<80)continue;barrels.push([x,y]);i++}
-  const repairs=[[cx-170,R()<.5?120:420]];for(let i=0;i<3;i++){for(let t=0;t<40;t++){const x=900+i*(cx-1100)/3+r(0,200),y=r(60,H-60);if(!near(x,y,24)){repairs.push([x,y]);break}}}
+  const enemies=[],nE=Math.round(10+d*8);
+  for(let i=0,tries=0;i<nE&&tries<400;tries++){const kk=pickE(),inside=i>=nE-3,x=inside?r(sX+140,WWg-60):r(650,cx),y=r(40,H-40);
+    if(near(x,y,E2[kk].r+6))continue;enemies.push([kk,x,y]);i++}
+  const barrels=[];for(let i=0,t=0;i<6+Math.round(d*4)&&t<100;t++){const x=r(600,WWg-80),y=r(40,H-40);if(near(x,y,20))continue;barrels.push([x,y]);i++}
+  const repairs=[[sX-260,R()<.5?120:420]];for(let i=0;i<3;i++){for(let t=0;t<40;t++){const x=900+i*(cx-1100)/3+r(0,200),y=r(60,H-60);if(!near(x,y,24)){repairs.push([x,y]);break}}}
   return{WW:WWg,walls,bridges,layout:L,diff:d,towers:objs.filter(o=>o[0]==='tower').map(o=>[o[1],o[2]]),depots:objs.filter(o=>o[0]==='depot').map(o=>[o[1],o[2]]),
-    hq:[cx+330,270],hqHp:320,barrels,repairs,enemies,compound:[cx,40,560,460],door:[cx+70,270],hpMul:1+d*1.1+k*.01,phase:ph,seed:reg.seed};
+    site:[sX,270],barrels,repairs,enemies,compound:null,hpMul:.75+d*.45+k*.004,phase:ph,seed:reg.seed};
 }
 
 // ---------- loop ----------
