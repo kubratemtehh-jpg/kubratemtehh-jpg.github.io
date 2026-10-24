@@ -35,7 +35,8 @@ canvas{display:block;width:100%;height:100%;cursor:none}
 #obj li.done::before{background:var(--green);border-color:var(--green)}
 #obj li.lock{color:var(--muted)}#obj li.lock::before{border-color:#a86bff}
 #br2{bottom:auto;top:30%;flex-direction:column;align-items:center;gap:2em}
-#canBtn2{--c:var(--orange)} #misBtn2{--c:var(--pink)}
+#canBtn2{--c:var(--orange)} #misBtn2{--c:var(--pink)} #postBtn2{--c:var(--green)}
+#br2{gap:1.7em}
 .chapters{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
 .chap{background:rgba(255,255,255,.06);border:1px solid var(--glass-line);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:6px;align-items:center;min-width:0}
 .chap svg{width:40px;height:40px}
@@ -172,6 +173,7 @@ button:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
     <div class="acts" id="br2">
       <button class="act" id="canBtn2" type="button" aria-label="Fire cannon"><span><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="14" r="6"/><rect x="11" y="9" width="11" height="5" rx="2" transform="rotate(-25 11 11)"/></svg></span><i>Q</i><b>CANNON</b></button>
       <button class="act" id="misBtn2" type="button" aria-label="Launch missiles"><span><svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 4c-5 0-9 3-11 8l3 3c5-2 8-6 8-11z"/><path d="M8 13l-4 1 2 4 3-2zM11 16l-1 4 4-2-1-3z"/><circle cx="15.5" cy="8.5" r="1.6" fill="#18233f"/></svg></span><i>E</i><b>MISSILES</b></button>
+      <button class="act" id="postBtn2" type="button" aria-label="Set up a squad post"><span><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 15c0-2 2-3 4-3h10c2 0 4 1 4 3v2H3z"/><circle cx="8" cy="8" r="2.6"/><circle cx="16" cy="8" r="2.6"/><rect x="3" y="18" width="18" height="3" rx="1.5" opacity=".6"/></svg></span><i>F</i><b>POST</b></button>
     </div>
   </div>
   <div class="hud" id="hud3" hidden>
@@ -220,7 +222,7 @@ button:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
         </div>
       </div>
       <details><summary>Chapter 1 stage list</summary><div class="ladder" id="ladder"></div></details>
-      <p class="keys">Chapter 1: <kbd>Space</kbd> fire · <kbd>R</kbd> reload · <kbd>Q</kbd> cannon · <kbd>W</kbd> missiles · <kbd>E</kbd> air strike<br>Chapter 2: <kbd>WASD</kbd> drive · mouse aim, hold to fire · <kbd>Q</kbd> cannon · <kbd>E</kbd> missiles · <kbd>P</kbd> pause<br>Chapter 3: tap a glowing region to attack · drag to move the map · mouse wheel to zoom</p>
+      <p class="keys">Chapter 1: <kbd>Space</kbd> fire · <kbd>R</kbd> reload · <kbd>Q</kbd> cannon · <kbd>W</kbd> missiles · <kbd>E</kbd> air strike<br>Chapter 2: <kbd>WASD</kbd> drive · mouse aim, hold to fire · <kbd>Q</kbd> cannon · <kbd>E</kbd> missiles · <kbd>F</kbd> squad post · <kbd>P</kbd> pause<br>Chapter 3: tap a glowing region to attack · drag to move the map · mouse wheel to zoom</p>
     </div>
   </div>
   <div class="menu" id="overMenu" hidden>
@@ -1041,7 +1043,7 @@ const MAP2={
 };
 let A={running:false,paused:false};
 // assault balance by region tier (0 easy, 1 medium, 2 hard)
-const TUNE={hp:[.8,2.3,2.5],dmg:[.6,1.4,1.42],budget:[14,36,1e9],cap:[14,24,26],flank:[0,.25,.45],behind:[0,0,.12],gap:[3.4,2.4,2.1],allyCost:3,allyCap:8};
+const TUNE={hp:[1.0,1.1,1.25],dmg:[.75,.8,.86],budget:[1e9,1e9,1e9],cap:[11,12,12],flank:[.25,.35,.45],behind:[.04,.08,.12],gap:[2.9,2.7,2.55],allyCost:3,reserve:4,maxPosts:4,turn:3.5,near:7,build:24};
 const keys={};
 const ground2=document.createElement("canvas");var G2S=0;
 const roadY=(x,ph=0)=>270+Math.sin(x/380+ph)*55+Math.sin(x/150+ph*2)*8;
@@ -1096,7 +1098,7 @@ function startAssault(cfg){
   A={camp:cfg,M,nT:M.towers.length,nD:M.depots.length,running:true,paused:false,time:0,kills:0,credits:0,cam:0,shake:0,flash:0,hurt:0,
     p:{x:260,y:270,r:PV.r,hp:PV.hp,ang:0,tur:0,tread:0},
     aimS:{x:520,y:270},aim:{x:520,y:270},auto:isTouch,hold:false,firing:false,heat:0,over:0,cool:0,canT:0,misT:0,recoil:0,muzzle:0,stick:null,
-    walls:M.walls.map(([x,y,w,h,t],i)=>({x,y,w,h,t,i,hp:cfg&&t==='sand'?70:0})),lastHit:0,tier:cfg?(M.diff<.34?0:M.diff<.67?1:2):0,allies:[],allyPts:0,allyN:0,stillT:0,flow:{t:4,maxX:260,budget:cfg?TUNE.budget[M.diff<.34?0:M.diff<.67?1:2]+Math.round((M.diff||0)*10):14},strikes:[],intensity:0,
+    walls:M.walls.map(([x,y,w,h,t],i)=>({x,y,w,h,t,i,hp:cfg&&t==='sand'?70:0})),lastHit:0,tier:cfg?(M.diff<.34?0:M.diff<.67?1:2):0,allies:[],posts:[],reserve:TUNE.reserve,allyPts:0,allyN:0,stillT:0,flow:{t:3,maxX:260,budget:1e9},strikes:[],intensity:0,
     structs:[...M.towers.map(([x,y])=>({kind:'tower',x,y,r:22,hp:60*hm,max:60*hm,armor:2,tur:Math.PI,atk:1,range:380,hit:0,awake:false,side:1})),
       ...M.depots.map(([x,y])=>({kind:'depot',x,y,r:26,hp:50*hm,max:50*hm,armor:0,hit:0})),
       ...(M.hq?[{kind:'hq',x:M.hq[0],y:M.hq[1],r:52,hp:(M.hqHp||500)*hm,max:(M.hqHp||500)*hm,armor:3,hit:0,atk:1,spawnT:3,awake:false,tur:[Math.PI,Math.PI],dish:0}]:[])],
@@ -1110,7 +1112,7 @@ function startAssault(cfg){
   for(const id of['startMenu','overMenu','winMenu','failMenu','pauseMenu','campEnd'])$(id).hidden=true;
   toastQ=[];toast(cfg?'Attack '+cfg.name:'Operation Iron Fist',cfg?`${T.label} · ${LAYOUT2[M.layout]||'Open ground'} · ${WXNAME[cfg.weather]}`:'Enemy territory ahead');
   toast('Push forward','Clear the outposts, then build a forward bunker at the site');
-  if(cfg)toast(['Light resistance','Heavy resistance · attacks from the flanks','Endless enemy · attacks from all sides'][A.tier],'Every 3 kills, your tank drops a soldier');
+  toast(['Light resistance','Heavy resistance','Fierce resistance'][A.tier]+' · endless enemy from all sides',`Press POST to dig in a squad (${TUNE.maxPosts} posts) · 3 kills = 1 soldier`);
   toast(isTouch?'Right thumb drives':'WASD to drive',isTouch?'Gun fires by itself · cannon and missiles on the left':'Mouse to aim · hold to fire · Q cannon · E missiles');
   updHud2();
 }
@@ -1165,12 +1167,12 @@ function kill2(t){
   }
   if(t.kind)A.allyPts+=2;
   A.credits+=cr;A.texts.push({x:t.x,y:t.y-(t.r||20)-8,t:'+'+cr,life:1,big:cr>=50});
-  while(A.allyPts>=TUNE.allyCost&&A.allies.filter(a=>!a.dead).length<allyCap()){A.allyPts-=TUNE.allyCost;dropAlly()}
+  while(A.allyPts>=TUNE.allyCost){A.allyPts-=TUNE.allyCost;if(A.reserve<12){A.reserve++;A.texts.push({x:A.p.x,y:A.p.y-30,t:'+1 soldier',life:.9,col:'#7fd0ff'})}}
   updHud2();
 }
 
 function fire2(){
-  const p=A.p,a=p.tur+rnd(-.035,.035),sx=p.x+Math.cos(p.tur)*30-Math.sin(p.tur)*6,sy=p.y+Math.sin(p.tur)*30+Math.cos(p.tur)*6;
+  const p=A.p,a=p.tur+rnd(-.06,.06),sx=p.x+Math.cos(p.tur)*30-Math.sin(p.tur)*6,sy=p.y+Math.sin(p.tur)*30+Math.cos(p.tur)*6;
   A.bullets.push({x:sx,y:sy,sx,sy,vx:Math.cos(a)*PV.mg.speed,vy:Math.sin(a)*PV.mg.speed,dmg:PV.mg.dmg,range:PV.mg.range,col:PV.mg.col||'#ffd84a',size:2.8});
   A.heat+=PV.mg.heat;A.muzzle=.05;beep(560,.03,'square',.02);
   if(A.heat>=1){A.heat=1;A.over=2;beep(140,.3,'sawtooth',.04);A.texts.push({x:p.x,y:p.y-34,t:'OVERHEAT',life:1.2,big:true})}
@@ -1201,23 +1203,22 @@ function missiles2(){
 }
 
 // ---------- friendly soldiers ----------
-const ALLY={rifle:{range:270,rate:1.5,dmg:2.2,col:'#bfe6ff',name:'Rifleman'},mg:{range:240,rate:5,dmg:1,col:'#9fd8ff',name:'Gunner'},rpg:{range:320,rate:.35,dmg:16,col:'#ffd27a',name:'Rocket'}};
-const allyCap=()=>Math.min(14,TUNE.allyCap+Math.floor((A.camp?A.camp.k:0)/12));
-function dropAlly(){const p=A.p,type=['rifle','rifle','mg','rpg'][A.allyN++%4],k=A.camp?A.camp.k:0;
-  A.allies.push({x:p.x-Math.cos(p.ang)*30+rnd(-8,8),y:p.y-Math.sin(p.ang)*30+rnd(-8,8),r:9,hp:16+k*.4,max:16+k*.4,type,cd:rnd(.2,.8),ang:0,dug:false,step:0,hit:0,mul:1+k*.02});
-  A.texts.push({x:p.x,y:p.y-30,t:'+1 '+ALLY[type].name,life:1,col:'#7fd0ff'});beep(700,.06,'triangle',.03)}
-function hurtAlly(a,d){if(a.dead)return;a.hp-=a.dug?d*.5:d;a.hit=.08;if(a.hp<=0){a.dead=true;puff(a.x,a.y,'#7fb8ff',8,'spark')}}
+const ALLY={rifle:{range:300,rate:1.6,dmg:3.2,col:'#bfe6ff',name:'Rifleman'},mg:{range:260,rate:6,dmg:1.4,col:'#9fd8ff',name:'Gunner'},rpg:{range:340,rate:.4,dmg:22,col:'#ffd27a',name:'Rocket'}};
+function placePost(){
+  if(!A.running||A.paused||A.result)return;const p=A.p;
+  if(A.posts.length>=TUNE.maxPosts){A.texts.push({x:p.x,y:p.y-34,t:'No posts left',life:1});return}
+  if(A.reserve<2){A.texts.push({x:p.x,y:p.y-34,t:'Need 2 soldiers',life:1});return}
+  if(A.posts.some(q=>dist(q.x,q.y,p.x,p.y)<120)){A.texts.push({x:p.x,y:p.y-34,t:'Too close to another post',life:1});return}
+  const n=Math.min(4,A.reserve),k=A.camp?A.camp.k:0,post={x:p.x,y:p.y,r:36,men:[]};A.reserve-=n;
+  for(let i=0;i<n;i++){const a=i/n*Math.PI*2+.4,type=['rifle','mg','rifle','rpg'][(A.allyN++)%4];
+    const al={x:p.x+Math.cos(a)*18,y:p.y+Math.sin(a)*18,r:9,hp:36+k*.6,max:36+k*.6,type,cd:rnd(.2,.8),ang:a,dug:true,post,step:0,hit:0,mul:1+k*.02};post.men.push(al);A.allies.push(al)}
+  A.posts.push(post);debris(p.x,p.y,8);beep(420,.12,'triangle',.05);A.texts.push({x:p.x,y:p.y-40,t:'Squad post set',life:1.2,big:true,col:'#4be38f'});updHud2();
+}
+function hurtAlly(a,d){if(a.dead)return;a.hp-=d*.5;a.hit=.08;if(a.hp<=0){a.dead=true;puff(a.x,a.y,'#7fb8ff',8,'spark')}}
 function updateAllies(dt){
-  const p=A.p,list=A.allies.filter(a=>!a.dead),n=list.length,hold=A.stillT>1.2||(A.site&&A.site.inZone);
-  list.forEach((a,i)=>{
+  const list=A.allies.filter(a=>!a.dead);
+  list.forEach(a=>{
     a.hit=Math.max(0,a.hit-dt);
-    let tx,ty;
-    if(hold){const th=n>1?-1.15+2.3*i/(n-1):0,R=95+(i%2)*32;tx=p.x+Math.cos(th)*R;ty=p.y+Math.sin(th)*R}
-    else{tx=p.x-62-Math.floor(i/3)*30;ty=p.y+((i%3)-1)*36}
-    ty=clamp(ty,14,H-14);tx=clamp(tx,14,WW-14);
-    const dx=tx-a.x,dy=ty-a.y,d=Math.hypot(dx,dy);
-    if(d>4){const sp=Math.min(d,(d>140?170:85)*dt);a.x+=dx/d*sp;a.y+=dy/d*sp;a.step+=dt*8;a.dug=false;a.ang=Math.atan2(dy,dx)}else a.dug=hold;
-    collideWalls(a,a.r);
     const T=ALLY[a.type];let best=null,bd=T.range;
     for(const e of A.enemies){if(e.dead||!e.awake)continue;const q=dist(a.x,a.y,e.x,e.y);if(q<bd&&(e.air||los(a.x,a.y,e.x,e.y))){bd=q;best=e}}
     if(!best)for(const s of A.structs){if(s.dead||(s.kind==='hq'&&hqShielded()))continue;const q=dist(a.x,a.y,s.x,s.y);if(q<bd&&los(a.x,a.y,s.x,s.y)){bd=q;best=s}}
@@ -1227,11 +1228,10 @@ function updateAllies(dt){
         if(a.type==='rpg')A.shells.push({sx:ox,sy:oy,tx:best.x,ty:best.y,t:0,dur:Math.max(.2,bd/420),dmg:T.dmg*a.mul,splash:34});
         else{const g=a.ang+rnd(-.06,.06);A.bullets.push({x:ox,y:oy,sx:ox,sy:oy,vx:Math.cos(g)*820,vy:Math.sin(g)*820,dmg:T.dmg*a.mul,range:T.range,col:T.col,size:2})}}}
   });
-  if(A.allies.length>40)A.allies=A.allies.filter(a=>!a.dead);
+  A.allies=A.allies.filter(a=>!a.dead);for(const q of A.posts)q.men=q.men.filter(a=>!a.dead);
 }
 function drawAlly(a){
   ctx.save();ctx.translate(a.x,a.y);
-  if(a.dug){ctx.save();ctx.rotate(a.ang);ctx.strokeStyle='#b88c4a';ctx.lineWidth=1.2;for(let k=-1;k<=1;k++){ctx.save();ctx.rotate(k*.55);rr(12,-6,9,12,4,k?'#e6c07a':'#f0cf8a',true);ctx.restore()}ctx.restore()}
   ctx.fillStyle='rgba(10,40,25,.3)';ctx.beginPath();ctx.ellipse(3,4,10,8,0,0,7);ctx.fill();
   ctx.rotate(a.ang);
   const sw=a.dug?0:Math.sin(a.step)*3;ctx.fillStyle='#1d2f52';ctx.beginPath();ctx.ellipse(sw,-4.5,3,2.2,0,0,7);ctx.ellipse(-sw,4.5,3,2.2,0,0,7);ctx.fill();
@@ -1248,7 +1248,7 @@ function spawnRush(){
   let t=rnd(0,pool.reduce((a,q)=>a+q[1],0)),k='soldier';for(const [kk,w] of pool){if((t-=w)<=0){k=kk;break}}
   for(let tries=0;tries<10;tries++){let x=Math.min(A.cam+W+rnd(30,150),WW-30),y=rnd(40,H-40);const r0=Math.random();
     if(r0<TUNE.behind[A.tier])x=Math.max(20,A.cam-20);
-    else if(r0<TUNE.behind[A.tier]+TUNE.flank[A.tier]){x=clamp(A.p.x+rnd(-160,320),30,WW-30);y=Math.random()<.5?14:H-14}
+    else if(r0<TUNE.behind[A.tier]+TUNE.flank[A.tier]){const q=A.posts.length&&Math.random()<.5?A.posts[Math.floor(Math.random()*A.posts.length)]:A.p;x=clamp(q.x+rnd(-260,320),30,WW-30);y=Math.random()<.5?14:H-14;if(dist(x,y,A.p.x,A.p.y)<300)x=clamp(A.p.x+(Math.random()<.5?-1:1)*rnd(300,420),30,WW-30)}
     if(!E2[k].air&&A.walls.some(w=>x>w.x-E2[k].r&&x<w.x+w.w+E2[k].r&&y>w.y-E2[k].r&&y<w.y+w.h+E2[k].r))continue;
     const e=A.mk(k,x,y);e.awake=true;e.rush=true;A.enemies.push(e);return}
 }
@@ -1277,10 +1277,10 @@ function update2(dt){
   if(A.auto){let best=null,bs=-1e9;
     for(const t of [...A.enemies.filter(e=>!e.dead&&e.awake),...A.structs.filter(q=>!q.dead&&!(q.kind==='hq'&&hqShielded()))]){const d=dist(t.x,t.y,p.x,p.y);if(d>PV.mg.range)continue;
       const sc=-d+(t.x>p.x-20?120:0)+(t.kind==='tower'?60:0);if(sc>bs){bs=sc;best=t}}
-    if(best){A.aim={x:best.x,y:best.y};if(A.heat>.85)A.hold=true;if(A.heat<.35)A.hold=false;A.firing=!A.hold}
+    if(best){A.aim={x:best.x,y:best.y};if(A.heat>.85)A.hold=true;if(A.heat<.35)A.hold=false;A.firing=!A.hold&&Math.abs(angDiff(Math.atan2(best.y-p.y,best.x-p.x),p.tur))<.25}
     else{A.aim={x:p.x+Math.cos(p.ang)*160,y:p.y+Math.sin(p.ang)*160};A.firing=false}}
   else A.aim={x:A.aimS.x+A.cam,y:A.aimS.y};
-  p.tur+=clamp(angDiff(Math.atan2(A.aim.y-p.y,A.aim.x-p.x),p.tur),-10*dt,10*dt);
+  p.tur+=clamp(angDiff(Math.atan2(A.aim.y-p.y,A.aim.x-p.x),p.tur),-TUNE.turn*dt,TUNE.turn*dt);
   // machine gun with heat
   if(A.over>0){A.over-=dt;if(A.over<=0){A.over=0;A.heat=.35}}
   A.cool-=dt;
@@ -1329,7 +1329,6 @@ function update2(dt){
     e.x+=vx*e.speed*dt;e.y+=vy*e.speed*dt;e.step+=dt*e.speed*.18;
     if(!e.air){collideWalls(e,e.r);for(const s of A.structs)if(!s.dead)pushOut(e,s.x,s.y,s.r)}
     e.y=clamp(e.y,e.r,H-e.r);e.x=clamp(e.x,e.r,WW-e.r);
-    if(A.site&&A.tier===0&&e.x<p.x+90)e.x=Math.min(WW-e.r,p.x+90);
     e.atk-=dt;
     if(seen&&d<e.range&&e.atk<=0){e.atk=e.cd*rnd(.8,1.2);
       enemyShot(e.x+Math.cos(e.ang)*(e.r+4),e.y+Math.sin(e.ang)*(e.r+4),tg.x,tg.y,e.big?270:330,e.dmg*(A.camp?TUNE.dmg[A.tier]:1),!!e.big);beep(e.big?70:260,.05,'sawtooth',.02)}
@@ -1371,13 +1370,14 @@ function update2(dt){
   if(!A.result){const F=A.flow,gx=A.site?A.site.x:HQ().x;F.maxX=Math.max(F.maxX,p.x);
     const I=clamp((F.maxX-400)/Math.max(400,gx-700),0,1),tm=Math.min(1,A.time/150);A.intensity=clamp(.12+I*.6+tm*.28,0,1);
     F.t-=dt;const alive=A.enemies.reduce((n,e)=>n+(!e.dead&&e.awake?1:0),0);
-    if(F.t<=0&&alive<(A.camp?TUNE.cap[A.tier]:18)&&F.budget>0){F.t=(TUNE.gap[A.tier]-2.4*A.intensity*(A.tier?1.05:1))*rnd(.7,1.3);const n=Math.min(F.budget,1+Math.floor(Math.random()*(1+A.intensity*2.5)));for(let i=0;i<n;i++){spawnRush();F.budget--}}
-    if(A.time-A.lastHit>2)p.hp=Math.min(PV.hp,p.hp+PV.hp*.05*dt)}
+    if(F.t<=0&&alive<(A.camp?TUNE.cap[A.tier]:13)&&F.budget>0){F.t=(TUNE.gap[A.tier]-2.4*A.intensity*(A.tier?1.05:1))*rnd(.7,1.3);const n=Math.min(F.budget,1+Math.floor(Math.random()*(1+A.intensity*2.5)));for(let i=0;i<n;i++){spawnRush();F.budget--}}
+    if(A.time-A.lastHit>2.5)p.hp=Math.min(PV.hp,p.hp+PV.hp*.03*dt)}
   // build site: clear the outposts, then hold the site while the bunker goes up
   if(A.site&&!A.result){const B=A.site,inZone=dist(p.x,p.y,B.x,B.y)<B.r;B.ready=!hqShielded();B.inZone=inZone;
-    if(B.ready&&inZone){if(!B.started){B.started=true;B.wave=A.camp?Math.round(12+(A.M.diff||0)*10):14;toast('Building the forward bunker','Stay inside · enemies in the site slow the work');beep(520,.15,'triangle',.05)}
+    if(B.ready&&inZone){if(!B.started){B.started=true;B.wave=0;toast('Building the forward bunker','Keep the area under control · work stops when too many enemies are near');beep(520,.15,'triangle',.05)}
       B.blockers=A.enemies.reduce((n,e)=>n+(!e.dead&&!e.air&&dist(e.x,e.y,B.x,B.y)<B.r?1:0),0);
-      B.prog=Math.min(1,B.prog+dt/30/(1+.6*B.blockers));
+      B.nearby=A.enemies.reduce((n,e)=>n+(!e.dead&&e.awake&&dist(e.x,e.y,B.x,B.y)<420?1:0),0);
+      if(B.nearby<TUNE.near)B.prog=Math.min(1,B.prog+dt/TUNE.build/(1+.5*B.blockers));
       if(B.prog>=1){A.result='win';A.endT=2.2;A.flash=.35;toast('Forward bunker built',A.camp?'Region captured':'Mission complete');beep(660,.15,'triangle',.06);setTimeout(()=>beep(990,.2,'triangle',.06),130)}}
     if(B.started&&B.wave>0&&!A.result){B.waveT-=dt;if(B.waveT<=0){B.waveT=rnd(.8,1.4);const n=Math.min(B.wave,B.prog>.5?2:1);for(let i=0;i<n;i++){spawnRush();B.wave--}}}}
   // enemy shots
@@ -1425,11 +1425,12 @@ function updHud2(){
   $('vhpTxt').textContent=Math.ceil(p.hp)+' / '+PV.hp;$('vName').textContent=A.camp?'IFV · '+PV.mg.name:'Iron Fist IFV';
   $('heatbar').firstElementChild.style.width=A.heat*100+'%';$('heatbar').classList.toggle('over',A.over>0);
   $('heatLbl').textContent=A.over>0?'Overheated':'Gun heat';
-  $('credits').textContent=`${A.allies.filter(a=>!a.dead).length} troops · ${A.credits} cr`;
+  $('credits').textContent=`${A.reserve} soldiers ready · ${A.credits} cr`;
   const tl=towersLeft(),dl=depotsLeft(),hq=HQ(),B=A.site;
   $('objList').innerHTML=`<li class="${tl?'':'done'}">Gun towers ${A.nT-tl}/${A.nT}</li><li class="${dl?'':'done'}">Ammo depots ${A.nD-dl}/${A.nD}</li>`+
     (B?`<li class="${B.prog>=1?'done':B.ready?'':'lock'}">Build forward bunker ${Math.round(B.prog*100)}%</li>`:`<li class="${hq.dead?'done':hqShielded()?'lock':''}">Command HQ${hqShielded()?' (shielded)':''}</li>`);
   setAct2('canBtn2',A.canT,PV.can.cd,'CANNON');setAct2('misBtn2',A.misT,PV.mis.cd,'MISSILES');
+  {const b=$('postBtn2'),ok=A.posts.length<TUNE.maxPosts&&A.reserve>=2;b.classList.toggle('ready',ok);b.classList.toggle('locked',A.posts.length>=TUNE.maxPosts);b.style.setProperty('--p',Math.min(100,A.reserve/2*100)+'%');b.querySelector('b').textContent=`POST ${TUNE.maxPosts-A.posts.length} LEFT`}
 }
 function setAct2(id,t,cd,label){const b=$(id);b.classList.toggle('ready',t<=0);b.style.setProperty('--p',(100-t/cd*100)+'%');b.querySelector('b').textContent=t>0?Math.ceil(t)+'s':label}
 
@@ -1453,6 +1454,7 @@ function draw2(){
   if(A.site&&vis(A.site.x,200))drawSite();
   for(const s of A.structs)if(vis(s.x,120))drawStruct(s);
   for(const e of A.enemies)if(!e.dead&&!e.air&&vis(e.x))drawEnemy(e);
+  for(const q of A.posts)if(vis(q.x)){ctx.globalAlpha=q.men.length?1:.45;sandbags(q.x,q.y,q.r,14);ctx.globalAlpha=1}
   for(const a of A.allies)if(!a.dead&&vis(a.x))drawAlly(a);
   if(!(A.result==='fail'&&A.endT<1.4))drawPlayer();
   for(const k of A.strikes){const q=1-k.t/k.max;ctx.strokeStyle=`rgba(255,60,80,${.5+.5*q})`;ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(k.x,k.y,50,0,7);ctx.stroke();
@@ -1584,7 +1586,7 @@ function drawSite(){
   ctx.strokeStyle='#4f5d72';ctx.lineWidth=4;ctx.stroke();ctx.strokeStyle='#36b9ff';ctx.lineWidth=3;ctx.beginPath();ctx.arc(x,y,32,0,7);ctx.stroke();ctx.globalAlpha=1;
   if(B.prog<1){ctx.strokeStyle='rgba(255,201,60,.85)';ctx.lineWidth=2;for(let i=-40;i<=40;i+=20){ctx.beginPath();ctx.moveTo(x+i,y-48);ctx.lineTo(x+i,y+48);ctx.stroke()}ctx.beginPath();ctx.moveTo(x-48,y);ctx.lineTo(x+48,y);ctx.stroke()}
   ctx.strokeStyle='#2b3240';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(x+56,y-20);ctx.lineTo(x+56,y-74);ctx.stroke();ctx.fillStyle='#2f8cff';ctx.beginPath();ctx.moveTo(x+56,y-74);ctx.lineTo(x+86,y-64);ctx.lineTo(x+56,y-54);ctx.fill();
-  const label=B.prog>=1?'FORWARD BUNKER':B.started?`BUILDING ${Math.round(B.prog*100)}%${!B.inZone?' · RETURN TO SITE':B.blockers?' · CLEAR THE SITE':''}`:B.ready?'BUILD SITE · DRIVE IN':'BUILD SITE · CLEAR OUTPOSTS FIRST';
+  const label=B.prog>=1?'FORWARD BUNKER':B.started?`BUILDING ${Math.round(B.prog*100)}%${!B.inZone?' · RETURN TO SITE':B.nearby>=TUNE.near?' · STOPPED: ENEMY TOO CLOSE':B.blockers?' · CLEAR THE SITE':''}`:B.ready?'BUILD SITE · DRIVE IN':'BUILD SITE · CLEAR OUTPOSTS FIRST';
   ctx.font='800 12px Rubik,system-ui';ctx.textAlign='center';ctx.lineJoin='round';ctx.lineWidth=3.5;ctx.strokeStyle='rgba(20,24,40,.8)';ctx.strokeText(label,x,y-B.r-16);ctx.fillStyle=B.ready?'#bfe6ff':'#fff';ctx.fillText(label,x,y-B.r-16);
 }
 function drawMinimap(){
@@ -1621,11 +1623,11 @@ cv.addEventListener('pointerup',rel2);cv.addEventListener('pointercancel',rel2);
 addEventListener('keydown',e=>{if(mode!==2)return;keys[e.code]=true;if(!A.running)return;
   if(e.code==='Space'){A.firing=true;e.preventDefault()}
   if(e.code.startsWith('Arrow'))e.preventDefault();
-  if(e.code==='KeyQ')cannon2();if(e.code==='KeyE')missiles2();
+  if(e.code==='KeyQ')cannon2();if(e.code==='KeyE')missiles2();if(e.code==='KeyF')placePost();
   if(e.code==='KeyP'||e.code==='Escape')togglePause()});
 addEventListener('keyup',e=>{keys[e.code]=false;if(mode===2&&e.code==='Space')A.firing=false});
 addEventListener('blur',()=>{for(const k in keys)keys[k]=false});
-for(const [id,fn] of [['canBtn2',cannon2],['misBtn2',missiles2]])$(id).addEventListener('pointerdown',e=>{e.stopPropagation();e.preventDefault();fn()});
+for(const [id,fn] of [['canBtn2',cannon2],['misBtn2',missiles2],['postBtn2',placePost]])$(id).addEventListener('pointerdown',e=>{e.stopPropagation();e.preventDefault();fn()});
 function showStars(){let s=0;try{s=+localStorage.getItem('lastBunkerCh2')||0}catch(e){}$('ch2Stars').textContent=s?'★'.repeat(s)+'☆'.repeat(3-s):''}
 showStars();
 
@@ -1895,7 +1897,7 @@ campaignCard();
 // ---------- procedural assault maps for chapter 3 ----------
 function genAssault(reg,k,layout){
   const R=mulberry(reg.seed),r=(a,b)=>a+R()*(b-a),d=reg.diff,L=layout||'road';
-  const WWg=Math.round(2400+d*500),sX=WWg-450,cx=sX-150,ph=r(0,6);
+  const WWg=Math.round(3400+d*700),sX=WWg-450,cx=sX-150,ph=r(0,6);
   const rY=x=>{const q=clamp((x-(sX-420))/420,0,1);return roadY(x,ph)*(1-q)+270*q};
   const walls=[],bridges=[];
   const hits=(x,y,w,h,m)=>walls.some(([wx,wy,ww,wh])=>x<wx+ww+m&&x+w>wx-m&&y<wy+wh+m&&y+h>wy-m);
@@ -1941,5 +1943,4 @@ function loop(t){
 requestAnimationFrame(loop);
 })();
 </script>
-
 </body></html>
