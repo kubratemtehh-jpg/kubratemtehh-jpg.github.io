@@ -63,6 +63,24 @@ button.ghost{font:700 clamp(12px,1.6vw,15px) var(--ui);letter-spacing:.06em;back
 #carm{left:1.4%;bottom:2.6%;width:16em;display:flex;flex-direction:column;gap:.25em}
 #cGun{font-family:var(--display);color:var(--gold);font-size:1.15em}
 #cExtra,#cFort{font-size:.8em;color:var(--muted)}
+#cbank{right:1.4%;bottom:calc(2.6% + 3.6em);width:13.5em;display:flex;flex-direction:column;gap:.3em;pointer-events:auto}
+#cMoney{font-size:1.5em;font-weight:800;color:var(--gold)}#cBankTxt{font-size:.85em;color:var(--muted)}
+#cbank .row2{display:flex;gap:.4em}#cbank .row2 button{flex:1;font-size:.95em;padding:.45em .6em}
+.card.shop{max-width:760px;display:flex;flex-direction:column;gap:10px;text-align:left}
+.shopHead{display:flex;align-items:center;gap:12px}.shopHead h2{margin:0;font:400 clamp(22px,3.4vw,34px) var(--display);color:#fff}
+.shopHead .num{margin-left:auto;font-weight:800;font-size:clamp(16px,2.2vw,22px);color:var(--gold)}.shopHead .ghost{padding:.5em 1.1em}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}.tabs button{font:700 clamp(11px,1.4vw,14px) var(--ui);padding:.45em .9em;border-radius:999px;border:1px solid var(--glass-line);background:rgba(255,255,255,.06);color:var(--ink);cursor:pointer}
+.tabs button.on{background:var(--gold);color:#1a1300;border-color:transparent}
+.upList,.bankList{display:flex;flex-direction:column;gap:6px;overflow:auto;max-height:52vh}
+.up{display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center;background:rgba(255,255,255,.05);border:1px solid var(--glass-line);border-radius:14px;padding:8px 10px}
+.up h3{margin:0;font:700 clamp(13px,1.6vw,16px) var(--ui);color:#fff}.up p{margin:0;font-size:clamp(11px,1.3vw,13px);color:var(--muted)}
+.pips{display:flex;gap:2px;grid-column:1}.pips i{flex:1;max-width:16px;height:6px;border-radius:3px;background:rgba(255,255,255,.14)}.pips i.on{background:var(--gold)}
+.up button{grid-row:1/4;grid-column:2;min-width:6.5em;font:800 clamp(12px,1.5vw,15px) var(--ui);padding:.55em .8em;border-radius:12px;border:0;background:var(--gold);color:#1a1300;cursor:pointer}
+.up button:disabled{background:rgba(255,255,255,.1);color:var(--muted);cursor:default}
+.hint{margin:0;font-size:12px;color:var(--muted)}
+#cePay{width:100%;max-width:420px;margin:6px auto;display:flex;flex-direction:column;gap:3px;font-size:clamp(12px,1.5vw,15px)}
+.payRow,.payTot{display:flex;justify-content:space-between;gap:12px}.payRow span{color:var(--muted)}.payTot{border-top:1px solid var(--glass-line);padding-top:4px;margin-top:2px;font-size:1.15em}.payTot b{color:var(--gold)}
+.payLoss{color:var(--red);font-weight:700}.paySub{color:var(--muted);font-size:.9em}
 #cZoom{position:absolute;right:1.4%;bottom:2.6%;pointer-events:auto;font-size:1em}
 .chap .row2{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;align-items:center}
 .chap .ghost{font-size:12px;padding:.5em 1em}
@@ -190,6 +208,8 @@ button:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
       <button class="go" id="cAct" type="button" hidden>Defend now</button>
     </div>
     <div class="chip" id="carm"><span class="lbl">Arsenal</span><span id="cGun">Pistol</span><span id="cExtra"></span><span id="cFort"></span><span id="cNext"></span><div class="bar" id="cNextBar"><i style="width:0%"></i></div></div>
+    <div class="chip" id="cbank"><span class="lbl" id="cRank">Private</span><span id="cMoney" class="num">300 cr</span><span id="cBankTxt"></span>
+      <div class="row2"><button class="go" id="shopBtn" type="button">Shop</button><button class="ghost" id="bankBtn" type="button">Treasury</button></div></div>
     <button class="ghost" id="cZoom" type="button">Zoom in</button>
   </div>
   <div id="toast"></div>
@@ -201,14 +221,14 @@ button:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
       <div class="chapters">
         <div class="chap">
           <svg viewBox="0 0 24 24" fill="#36b9ff"><path d="M12 2l8 3v6c0 5-3.4 9.4-8 11-4.6-1.6-8-6-8-11V5z"/></svg>
-          <span class="tag">Chapter 1</span><h2>Hold the Line</h2>
+          <span class="tag">Chapter 1 · Training</span><h2>Hold the Line</h2>
           <p>Defend the bunker against endless waves. Climb 25 stages of guns, cannons, missiles and air strikes.</p>
           <span class="stars" id="bestTxt"></span>
           <button class="go" id="startBtn" type="button">Defend</button>
         </div>
         <div class="chap">
           <svg viewBox="0 0 24 24" fill="#ff8a3d"><rect x="3" y="9" width="15" height="9" rx="3"/><circle cx="10" cy="13.5" r="3.4" fill="#ffc93c"/><rect x="12" y="12.2" width="10" height="2.6" rx="1.2"/><rect x="2" y="17" width="17" height="3" rx="1.5" fill="#c4561c"/></svg>
-          <span class="tag">Chapter 2 · Preview mission</span><h2>Iron Fist</h2>
+          <span class="tag">Chapter 2 · Training</span><h2>Iron Fist</h2>
           <p>Take the fight to the enemy. Drive an armored vehicle through their land, destroy towers and depots, then build a forward bunker.</p>
           <span class="stars" id="ch2Stars"></span>
           <button class="go" id="assaultBtn" type="button">Attack</button>
@@ -216,7 +236,7 @@ button:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
         <div class="chap">
           <svg viewBox="0 0 24 24" fill="#4be38f"><path d="M3 5l6-2 6 2 6-2v16l-6 2-6-2-6 2z" opacity=".35"/><path d="M9 3v16M15 5v16" stroke="#4be38f" stroke-width="1.6" fill="none"/><circle cx="7" cy="10" r="2.2" fill="#36b9ff"/><circle cx="17" cy="13" r="2.2" fill="#ff4d5e"/></svg>
           <span class="tag">Chapter 3</span><h2>Conquest</h2>
-          <p>A world of 100 regions. Hold off enemy raids and push your front, one region at a time, until the whole map is yours.</p>
+          <p>The main war. 100 regions, paid by the kill. Upgrade your weapons in the armory, guard your treasury, and push the front until the whole map is yours.</p>
           <span class="stars" id="ch3Info"></span>
           <div class="row2"><button class="go" id="ch3Btn" type="button">Start</button><button class="ghost" id="ch3New" type="button" hidden>New campaign</button></div>
         </div>
@@ -242,7 +262,7 @@ button:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
       <div class="starsBig" id="winStars"></div>
       <p id="winInfo"></p>
       <p id="winTips"></p>
-      <p>Credits will buy upgrades in the garage, coming in the next update.</p>
+      <p>In Conquest, every kill pays into your treasury and buys upgrades in the armory.</p>
       <div class="btns"><button class="go" id="replay2" type="button">Play Again</button><button class="ghost menuBtn" type="button">Main Menu</button></div>
     </div>
   </div>
@@ -250,8 +270,26 @@ button:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
     <div class="card">
       <h1 id="ceTitle">Region Captured</h1>
       <p id="ceInfo"></p>
+      <div id="cePay"></div>
       <p id="ceUp"></p>
       <div class="btns"><button class="go" id="ceBack" type="button">Back to Map</button></div>
+    </div>
+  </div>
+  <div class="menu" id="shopMenu" hidden>
+    <div class="card shop">
+      <div class="shopHead"><h2>Armory</h2><span class="num" id="shopMoney"></span><button class="ghost" id="shopClose" type="button">Close</button></div>
+      <div class="tabs" id="shopTabs"></div>
+      <div class="upList" id="upList"></div>
+      <p class="hint">Upgrades work in every Conquest battle. Each level is small, so buy often.</p>
+    </div>
+  </div>
+  <div class="menu" id="bankMenu" hidden>
+    <div class="card shop">
+      <div class="shopHead"><h2>Treasury</h2><span class="num" id="bankMoney"></span><button class="ghost" id="bankClose" type="button">Close</button></div>
+      <p id="bankWhere"></p>
+      <div class="bankList" id="bankList"></div>
+      <div class="btns"><button class="ghost" id="bankMove" type="button">Move treasury</button></div>
+      <p class="hint">All pay goes into the treasury. If its region falls, the enemy loots it. The enemy hunts for it, and sometimes raids it deep behind the front.</p>
     </div>
   </div>
   <div class="menu" id="genMsg" hidden><div class="card"><h1>Drawing the map</h1><p>Surveying 100 regions…</p></div></div>
@@ -484,11 +522,13 @@ function reset(cfg){
      aim:{x:W*.55,y:BK.y},firing:false,running:true,paused:false,shake:0,recoil:0,outT:0,flash:0,hurt:0,muzzle:0};
   FX=S;if(cfg)applyArsenal(cfg.stage,cfg.fortBonus);else BK.r=FORTS[0].r;startWave(cfg?cfg.wave0:1);updHud();
 }
-const gun=()=>GUNS[S.gun];
+const gun=()=>S.gunX||GUNS[S.gun];
+const CAN=()=>S.canX||CANNON[S.cannon],MIS=()=>S.misX||MISSILE[S.missile];
 const live=()=>S.running&&!S.paused;
 function applyArsenal(st,bonus){
   S.stage=st;for(let i=0;i<=st;i++){const q=STAGES[i];if(q.k==='gun')S.gun=q.lv;else if(q.k==='cannon')S.cannon=q.lv;else if(q.k==='missile')S.missile=q.lv;else S.air=q.lv}
   S.ammo=GUNS[S.gun].mag;S.fort=Math.min(FORTS.length-1,FORTS.reduce((a,f,i)=>f.stage<=st?i:a,0)+(bonus||0));const F=FORTS[S.fort];S.maxHp=S.hp=F.hp;BK.r=F.r;S.shield=F.shield||0;
+  if(S.camp&&C&&C.up)applyUpgradesDefense();
 }
 function startWave(n){
   S.wave=n;
@@ -508,7 +548,7 @@ function makeEnemy(k,x,y){
   return {k,...t,hp,max:hp,x,y,ang:Math.PI,step:rnd(0,6),hit:0,atk:rnd(.5,1.5),sway:rnd(0,6),rot:0};
 }
 // how far the bunker can currently hit (main gun or heavy weapons)
-const reach=()=>Math.max(gun().range,S.cannon?CANNON[S.cannon].range:0,S.missile?MISSILE[S.missile].range:0);
+const reach=()=>Math.max(gun().range,S.cannon?CAN().range:0,S.missile?MIS().range:0);
 function spawn(){
   const pool=MIX.filter(([k])=>TYPES[k].from<=S.wave&&(!S.camp||!TYPES[k].stop||TYPES[k].stop<=reach()-10));
   let r=rnd(0,pool.reduce((a,[,w])=>a+w,0)),k='soldier';
@@ -521,7 +561,7 @@ function spawn(){
 
 // ---------- damage ----------
 function hurt(e,dmg,armorMul=1){
-  const d=Math.max(dmg*.4,dmg-e.armor*armorMul);
+  const d=Math.max(dmg*.4,dmg-e.armor*armorMul*(S.ap||1));
   e.hp-=d;if(d>.5)e.hit=.08;
   if(e.hp<=0&&!e.dead){
     e.dead=true;S.kills++;addScore(e.pts);
@@ -560,7 +600,7 @@ function aimAngle(fromY){return Math.atan2(S.aim.y-fromY,S.aim.x-BK.x)}
 // Heavy weapons pick their own targets, so they work with a thumb that only sets direction.
 // Cannon: value first, then distance to the bunker; anything already hitting the bunker gets top priority.
 function cannonTarget(){
-  if(!S.cannon)return null;const c=CANNON[S.cannon];let best=null,bs=-1e9;
+  if(!S.cannon)return null;const c=CAN();let best=null,bs=-1e9;
   for(const e of S.enemies){if(e.dead||e.x>W-5)continue;const d=dist(e.x,e.y,BK.x,BK.y);if(d>c.range)continue;
     const atWall=d<=(e.stop||BK.r+e.r+4)+6&&!e.stop;const sc=e.pts*40-d+(atWall?260:0);if(sc>bs){bs=sc;best=e}}
   return best;
@@ -569,7 +609,7 @@ function leadPos(e,ox,oy,speed){const d=dist(e.x,e.y,ox,oy),t=d/speed,moving=d>(
   return moving?{x:e.x+Math.cos(e.ang)*e.speed*t,y:e.y+Math.sin(e.ang)*e.speed*t,t}:{x:e.x,y:e.y,t}}
 function fireCannon(){
   if(!S.cannon||S.canT>0||!live())return;
-  const c=CANNON[S.cannon],tg=cannonTarget();
+  const c=CAN(),tg=cannonTarget();
   if(!tg){S.texts.push({x:BK.x,y:BK.y-BK.r-14,t:'No target in range',life:.9});return}
   S.canT=c.cd;
   const L=leadPos(tg,BK.x,BK.y,520);let tx=L.x,ty=L.y;
@@ -580,13 +620,13 @@ function fireCannon(){
 }
 // Missiles home in, so each one takes a different high-value target anywhere in range (vehicles and helicopters first).
 function missileTargets(){
-  if(!S.missile)return[];const m=MISSILE[S.missile];
+  if(!S.missile)return[];const m=MIS();
   return S.enemies.filter(e=>!e.dead&&e.x<W&&dist(e.x,e.y,BK.x,BK.y)<=m.range)
     .sort((a,b)=>(b.pts-a.pts)||(dist(a.x,a.y,BK.x,BK.y)-dist(b.x,b.y,BK.x,BK.y))).slice(0,m.salvo);
 }
 function fireMissiles(){
   if(!S.missile||S.misT>0||!live())return;
-  const m=MISSILE[S.missile];
+  const m=MIS();
   const cands=missileTargets();
   if(!cands.length){S.texts.push({x:BK.x,y:BK.y+BK.r+24,t:'No target in range',life:.9});return}
   S.misT=m.cd;
@@ -658,14 +698,14 @@ function updHud(){
   $('ammobar').firstElementChild.style.width=(rl?(1-S.reloading/w.reload):S.ammo/w.mag)*100+'%';
   $('ammobar').classList.toggle('low',!rl&&S.ammo<=Math.ceil(w.mag*.25));
   $('reloadBtn').classList.toggle('busy',rl);
-  setAct('canBtn',S.cannon,S.canT,S.cannon?CANNON[S.cannon].cd:1,'cannon');
-  setAct('misBtn',S.missile,S.misT,S.missile?MISSILE[S.missile].cd:1,'missile');
+  setAct('canBtn',S.cannon,S.canT,S.cannon?CAN().cd:1,'cannon');
+  setAct('misBtn',S.missile,S.misT,S.missile?MIS().cd:1,'missile');
   setAct('airBtn',S.air,S.airT,S.air?AIR[S.air].cd:1,'air');
 }
 function damageBunker(d){
   const F=FORTS[S.fort];S.shieldT=3;
   if(S.shield>0){const a=Math.min(S.shield,d);S.shield-=a;d-=a;S.shieldHit=.25;if(d<=0){beep(900,.05,'sine',.03);return}}
-  d=Math.max(d*.3,d-F.armor);S.hp-=d;S.hurt=Math.min(.5,S.hurt+.18);
+  d=Math.max(d*.3,d-F.armor)*(S.guard||1);S.hp-=d;S.hurt=Math.min(.5,S.hurt+.18);
   S.shake=Math.min(.35,S.shake+.1);beep(120,.08,'square',.05);
 }
 
@@ -674,7 +714,7 @@ let hudT=0;
 function update(dt){
   if(S.boss){S.boss=false;S.enemies.push(makeEnemy('boss',W+50,BK.y+rnd(-80,80)))}
   if(S.waveLeft>0){S.spawnT-=dt;if(S.spawnT<=0&&S.enemies.length<75){spawn();S.waveLeft--;S.spawnT=Math.max(.12,(1.6-S.wave*.03)/(1+S.stage*.08))*rnd(.6,1.4)}}
-  else if(!S.enemies.length&&!S.boss){S.waveBreak+=dt;if(S.waveBreak>2.2){S.waveBreak=0;if(S.camp&&S.wave>=S.camp.wave0+S.camp.waves-1){S.running=false;S.firing=false;campaignBattleEnd(true,`${S.kills} kills · bunker at ${Math.round(S.hp/S.maxHp*100)}%`);return}S.hp=Math.min(S.maxHp,S.hp+S.maxHp*.15);startWave(S.wave+1)}}
+  else if(!S.enemies.length&&!S.boss){S.waveBreak+=dt;if(S.waveBreak>2.2){S.waveBreak=0;if(S.camp&&S.wave>=S.camp.wave0+S.camp.waves-1){S.running=false;S.firing=false;campaignBattleEnd(true,`${S.kills} kills · bunker at ${Math.round(S.hp/S.maxHp*100)}%`,{bounty:S.score*5,combo:0,acc:S.shots?S.hits/S.shots:0});return}S.hp=Math.min(S.maxHp,S.hp+S.maxHp*.15);startWave(S.wave+1)}}
   if(S.reloading>0){S.reloading-=dt;if(S.reloading<=0){S.reloading=0;S.ammo=gun().mag;beep(760,.06,'triangle',.04)}}
   S.cool-=dt;
   if(S.firing&&S.cool<=0){fire();S.cool=1/gun().rate}
@@ -825,8 +865,8 @@ function drawRanges(){
   ctx.save();ctx.setLineDash([12,8]);ctx.lineDashOffset=-now/50;ctx.lineWidth=2.5;
   ctx.strokeStyle=S.outT>0?'rgba(255,77,94,.95)':'rgba(255,255,255,.75)';ctx.beginPath();ctx.arc(BK.x,BK.y,R,-Math.PI/2,Math.PI/2);ctx.stroke();
   ctx.setLineDash([2,8]);ctx.lineWidth=2;
-  if(S.cannon){ctx.strokeStyle=S.canT<=0?'rgba(255,138,61,.7)':'rgba(255,138,61,.3)';ctx.beginPath();ctx.arc(BK.x,BK.y,CANNON[S.cannon].range,-Math.PI/2,Math.PI/2);ctx.stroke()}
-  if(S.missile){ctx.strokeStyle=S.misT<=0?'rgba(255,95,168,.65)':'rgba(255,95,168,.25)';ctx.beginPath();ctx.arc(BK.x,BK.y,MISSILE[S.missile].range,-Math.PI/2,Math.PI/2);ctx.stroke()}
+  if(S.cannon){ctx.strokeStyle=S.canT<=0?'rgba(255,138,61,.7)':'rgba(255,138,61,.3)';ctx.beginPath();ctx.arc(BK.x,BK.y,CAN().range,-Math.PI/2,Math.PI/2);ctx.stroke()}
+  if(S.missile){ctx.strokeStyle=S.misT<=0?'rgba(255,95,168,.65)':'rgba(255,95,168,.25)';ctx.beginPath();ctx.arc(BK.x,BK.y,MIS().range,-Math.PI/2,Math.PI/2);ctx.stroke()}
   ctx.restore();
   if(BK.x+R<W-30){const x=BK.x+R,y=BK.y-14;ctx.font='700 11px Rubik,system-ui';ctx.textAlign='center';
     const txt=R+'m',tw=ctx.measureText(txt).width+12;rr(x-tw/2,y-11,tw,16,8,'rgba(20,30,60,.65)');ctx.fillStyle='#fff';ctx.fillText(txt,x,y+1)}
@@ -898,12 +938,12 @@ function drawBunker(){
   if(F.shield&&S.shield>0){const k=S.shield/F.shield;
     g=ctx.createRadialGradient(x,y,r,x,y,r+24);g.addColorStop(0,'rgba(54,185,255,0)');g.addColorStop(1,`rgba(120,220,255,${Math.min(.8,.12+.12*k+S.shieldHit)})`);
     circ(x,y,r+24,g);ctx.save();ctx.setLineDash([10,6]);ctx.lineDashOffset=now/40;ctx.strokeStyle=`rgba(160,235,255,${.4+.5*k})`;ctx.lineWidth=2+S.shieldHit*10;ctx.beginPath();ctx.arc(x,y,r+24,0,7);ctx.stroke();ctx.restore()}
-  if(S.cannon){const c=CANNON[S.cannon];ctx.save();ctx.translate(x,y-28);ctx.rotate(S.canAng);ctx.translate(-S.canKick*6,0);
+  if(S.cannon){const c=CAN();ctx.save();ctx.translate(x,y-28);ctx.rotate(S.canAng);ctx.translate(-S.canKick*6,0);
     ctx.strokeStyle='#1f2a3d';ctx.lineWidth=1.5;const bl=24+S.cannon*3;
     if(c.shells>1){rr(4,-7,bl,5,2,'#3a4a66',true);rr(4,2,bl,5,2,'#3a4a66',true)}else rr(4,-3.5,bl,7,2,'#3a4a66',true);
     g=ctx.createRadialGradient(-3,-3,1,0,0,12);g.addColorStop(0,'#ffb46b');g.addColorStop(1,'#d9601f');circ(0,0,12,g,true);circ(0,0,4,'#2b3240');ctx.restore()}
   if(S.missile){ctx.save();ctx.translate(x,y+28);ctx.rotate(S.misAng);ctx.strokeStyle='#1f2a3d';ctx.lineWidth=1.5;rr(-10,-10,22,20,4,'#4a5a78',true);
-    const n=Math.min(6,MISSILE[S.missile].salvo);for(let i=0;i<n;i++){const yy=-7+i*(14/Math.max(1,n-1));rr(6,yy-1.6,8,3.2,1.6,S.misT<=0?'#ff5fa8':'#6b7891')}ctx.restore()}
+    const n=Math.min(6,MIS().salvo);for(let i=0;i<n;i++){const yy=-7+i*(14/Math.max(1,n-1));rr(6,yy-1.6,8,3.2,1.6,S.misT<=0?'#ff5fa8':'#6b7891')}ctx.restore()}
   const a=Math.atan2(S.aim.y-y,S.aim.x-x),len=26+S.gun*2.6;
   ctx.save();ctx.translate(x,y);ctx.rotate(a);ctx.translate(-S.recoil*4,0);
   ctx.strokeStyle='#141a28';ctx.lineWidth=1.5;
@@ -1002,7 +1042,7 @@ document.querySelectorAll('.menuBtn').forEach(b=>b.onclick=goMenu);
 
 function gameOver(){
   S.running=false;S.firing=false;
-  if(S.camp){campaignBattleEnd(false,`${S.kills} kills before the bunker fell`);return}
+  if(S.camp){campaignBattleEnd(false,`${S.kills} kills before the bunker fell`,{bounty:S.score*5,combo:0,acc:S.shots?S.hits/S.shots:0});return}
   if(S.score>best){best=S.score;try{localStorage.setItem('lastBunkerBest',best)}catch(e){}}
   const acc=S.shots?Math.round(S.hits/S.shots*100):0;
   $('finalScore').textContent=S.score.toLocaleString('en-US');
@@ -1092,6 +1132,8 @@ function startAssault(cfg){
     PV.mg={dmg:2+G0.dmg*.9,rate:6+G0.rate*.5,range:340+G0.range*.25,speed:G0.speed+200,heat:.03,col:G0.col,name:G0.name};
     PV.can={dmg:36+g.cannon*9,splash:58+g.cannon*6,cd:Math.max(1.1,1.9-g.cannon*.12),range:460+g.cannon*20};
     PV.mis={dmg:22+g.missile*5,salvo:2+g.missile,cd:Math.max(4,7-g.missile*.6),range:500+g.missile*25}}
+  if(cfg){const u=upg;PV.hp=Math.round(PV.hp*u('hp'));PV.mg.dmg*=u('gdmg');PV.mg.rate*=u('grate');PV.mg.range*=u('grng');PV.mg.heat*=u('gcool');
+    PV.can.dmg*=u('cdmg');PV.can.splash*=u('csplash');PV.can.cd*=u('ccd');PV.mis.dmg*=u('mdmg');PV.mis.cd*=u('mcd');PV.mis.salvo+=u('msalvo')}
   buildGround2(M,T);
   mode=2;S.running=false;C.running=false;$('hud3').hidden=true;
   const mk=(k,x,y)=>{const t=E2[k],q=hm*(mk.mul||1);return{k,...t,x,y,hp:t.hp*q,max:t.hp*q,armor:t.armor||0,ang:Math.PI,step:rnd(0,6),hit:0,atk:rnd(.5,1.5),sway:rnd(0,6),seed:rnd(0,6),rot:0,awake:false}};
@@ -1107,12 +1149,14 @@ function startAssault(cfg){
     pickups:M.repairs.map(([x,y])=>({x,y})),
     enemies:M.enemies.map(([k,x,y])=>mk(k,x,y)),
     bullets:[],eshots:[],shells:[],missiles:[],parts:[],marks:[],blasts:[],texts:[],chain:[],endT:0,result:null};
+  A.U=cfg?{turn:upg('gturn'),spread:upg('gacc'),regen:upg('regen'),guard:upg('guard'),ap:upg('ap'),shp:upg('shp'),sdmg:upg('sdmg')}:{};A.maxPosts=(A.maxPosts||TUNE.maxPosts)+(cfg?upg('spost'):0);A.reserve+=cfg?upg('sres'):0;
+  A.shots=0;A.hits=0;A.combo=0;A.lastKill=-9;A.comboCr=0;
   A.mk=mk;A.hpMulT=cfg?TUNE.hp[A.tier]:1;for(const e of A.enemies){e.hp*=A.hpMulT;e.max=e.hp}mk.mul=A.hpMulT;FX=A;setWeather(cfg?cfg.weather:'clear');
   $('hud1').hidden=true;$('hud2').hidden=false;
   for(const id of['startMenu','overMenu','winMenu','failMenu','pauseMenu','campEnd'])$(id).hidden=true;
   toastQ=[];toast(cfg?'Attack '+cfg.name:'Operation Iron Fist',cfg?`${T.label} · ${LAYOUT2[M.layout]||'Open ground'} · ${WXNAME[cfg.weather]}`:'Enemy territory ahead');
   toast('Push forward','Clear the outposts, then build a forward bunker at the site');
-  toast(['Light resistance','Heavy resistance','Fierce resistance'][A.tier]+' · endless enemy from all sides',`Press POST to dig in a squad (${TUNE.maxPosts} posts) · 3 kills = 1 soldier`);
+  toast(['Light resistance','Heavy resistance','Fierce resistance'][A.tier]+' · endless enemy from all sides',`Press POST to dig in a squad (${(A.maxPosts||TUNE.maxPosts)} posts) · 3 kills = 1 soldier`);
   toast(isTouch?'Right thumb drives':'WASD to drive',isTouch?'Gun fires by itself · cannon and missiles on the left':'Mouse to aim · hold to fire · Q cannon · E missiles');
   updHud2();
 }
@@ -1134,7 +1178,7 @@ function collideWalls(o,r){for(const w of A.walls){const cx=clamp(o.x,w.x,w.x+w.
     if(m===l)o.x=w.x-r;else if(m===ri)o.x=w.x+w.w+r;else if(m===t)o.y=w.y-r;else o.y=w.y+w.h+r}}}}
 function pushOut(o,x,y,r){const dx=o.x-x,dy=o.y-y,d=Math.hypot(dx,dy)||.01,m=o.r+r;if(d<m){o.x=x+dx/d*m;o.y=y+dy/d*m}}
 
-function dmgPlayer(d){if(A.result)return;A.lastHit=A.time;A.p.hp-=d;A.hurt=Math.min(.5,A.hurt+.15);A.shake=Math.min(.35,A.shake+.08);beep(120,.06,'square',.04);
+function dmgPlayer(d){if(A.result)return;d*=A.U&&A.U.guard||1;A.lastHit=A.time;A.p.hp-=d;A.hurt=Math.min(.5,A.hurt+.15);A.shake=Math.min(.35,A.shake+.08);beep(120,.06,'square',.04);
   if(A.p.hp<=0){A.p.hp=0;A.result='fail';A.endT=1.6;explodeFx(A.p.x,A.p.y,70);debris(A.p.x,A.p.y,30);A.flash=.4;boom(.2,.8)}}
 function explodeFx(x,y,r){blast(x,y,r);A.marks.push({x,y,life:9,r:r*.4});puff(x,y,'#ffb84a',10,'spark')}
 function explode2(x,y,rad,dmg,hitsPlayer){
@@ -1150,7 +1194,7 @@ function explode2(x,y,rad,dmg,hitsPlayer){
 function hurt2(t,dmg,am=1){
   if(t.dead)return;
   if(t.kind==='hq'&&hqShielded()){t.hit=.05;t.shieldHit=.25;return}
-  const d=Math.max(dmg*.4,dmg-(t.armor||0)*am);t.hp-=d;if(d>.5)t.hit=.08;t.awake=true;
+  const d=Math.max(dmg*.4,dmg-(t.armor||0)*am*(A.U&&A.U.ap||1));t.hp-=d;if(d>.5)t.hit=.08;t.awake=true;
   if(t.hp<=0){t.dead=true;kill2(t)}
 }
 function kill2(t){
@@ -1163,6 +1207,7 @@ function kill2(t){
     if(t.kind!=='hq'&&!hqShielded())toast(A.site?'Outposts cleared':'HQ shield is down',A.site?'Drive into the build site':'Destroy the command HQ');
   }else{
     A.kills++;cr=t.pts*5;A.allyPts+=1;
+    if(A.camp){A.combo=A.time-A.lastKill<2.2?A.combo+1:0;A.lastKill=A.time;const cb=Math.round(cr*Math.min(.5,A.combo*.05));if(cb){A.comboCr+=cb;cr+=cb}}
     if(t.r>=14){blast(t.x,t.y,t.r*2.2);debris(t.x,t.y,14);boom(.13,.5)}else{puff(t.x,t.y,PAL[t.k][0],8,'spark');beep(220,.05,'triangle',.03)}
   }
   if(t.kind)A.allyPts+=2;
@@ -1172,7 +1217,7 @@ function kill2(t){
 }
 
 function fire2(){
-  const p=A.p,a=p.tur+rnd(-.06,.06),sx=p.x+Math.cos(p.tur)*30-Math.sin(p.tur)*6,sy=p.y+Math.sin(p.tur)*30+Math.cos(p.tur)*6;
+  A.shots++;const p=A.p,a=p.tur+rnd(-.06,.06)*(A.U.spread||1),sx=p.x+Math.cos(p.tur)*30-Math.sin(p.tur)*6,sy=p.y+Math.sin(p.tur)*30+Math.cos(p.tur)*6;
   A.bullets.push({x:sx,y:sy,sx,sy,vx:Math.cos(a)*PV.mg.speed,vy:Math.sin(a)*PV.mg.speed,dmg:PV.mg.dmg,range:PV.mg.range,col:PV.mg.col||'#ffd84a',size:2.8});
   A.heat+=PV.mg.heat;A.muzzle=.05;beep(560,.03,'square',.02);
   if(A.heat>=1){A.heat=1;A.over=2;beep(140,.3,'sawtooth',.04);A.texts.push({x:p.x,y:p.y-34,t:'OVERHEAT',life:1.2,big:true})}
@@ -1206,12 +1251,12 @@ function missiles2(){
 const ALLY={rifle:{range:300,rate:1.6,dmg:3.2,col:'#bfe6ff',name:'Rifleman'},mg:{range:260,rate:6,dmg:1.4,col:'#9fd8ff',name:'Gunner'},rpg:{range:340,rate:.4,dmg:22,col:'#ffd27a',name:'Rocket'}};
 function placePost(){
   if(!A.running||A.paused||A.result)return;const p=A.p;
-  if(A.posts.length>=TUNE.maxPosts){A.texts.push({x:p.x,y:p.y-34,t:'No posts left',life:1});return}
+  if(A.posts.length>=(A.maxPosts||TUNE.maxPosts)){A.texts.push({x:p.x,y:p.y-34,t:'No posts left',life:1});return}
   if(A.reserve<2){A.texts.push({x:p.x,y:p.y-34,t:'Need 2 soldiers',life:1});return}
   if(A.posts.some(q=>dist(q.x,q.y,p.x,p.y)<120)){A.texts.push({x:p.x,y:p.y-34,t:'Too close to another post',life:1});return}
   const n=Math.min(4,A.reserve),k=A.camp?A.camp.k:0,post={x:p.x,y:p.y,r:36,men:[]};A.reserve-=n;
   for(let i=0;i<n;i++){const a=i/n*Math.PI*2+.4,type=['rifle','mg','rifle','rpg'][(A.allyN++)%4];
-    const al={x:p.x+Math.cos(a)*18,y:p.y+Math.sin(a)*18,r:9,hp:36+k*.6,max:36+k*.6,type,cd:rnd(.2,.8),ang:a,dug:true,post,step:0,hit:0,mul:1+k*.02};post.men.push(al);A.allies.push(al)}
+    const sh=(36+k*.6)*(A.U.shp||1),al={x:p.x+Math.cos(a)*18,y:p.y+Math.sin(a)*18,r:9,hp:sh,max:sh,type,cd:rnd(.2,.8),ang:a,dug:true,post,step:0,hit:0,mul:(1+k*.02)*(A.U.sdmg||1)};post.men.push(al);A.allies.push(al)}
   A.posts.push(post);debris(p.x,p.y,8);beep(420,.12,'triangle',.05);A.texts.push({x:p.x,y:p.y-40,t:'Squad post set',life:1.2,big:true,col:'#4be38f'});updHud2();
 }
 function hurtAlly(a,d){if(a.dead)return;a.hp-=d*.5;a.hit=.08;if(a.hp<=0){a.dead=true;puff(a.x,a.y,'#7fb8ff',8,'spark')}}
@@ -1280,7 +1325,7 @@ function update2(dt){
     if(best){A.aim={x:best.x,y:best.y};if(A.heat>.85)A.hold=true;if(A.heat<.35)A.hold=false;A.firing=!A.hold&&Math.abs(angDiff(Math.atan2(best.y-p.y,best.x-p.x),p.tur))<.25}
     else{A.aim={x:p.x+Math.cos(p.ang)*160,y:p.y+Math.sin(p.ang)*160};A.firing=false}}
   else A.aim={x:A.aimS.x+A.cam,y:A.aimS.y};
-  p.tur+=clamp(angDiff(Math.atan2(A.aim.y-p.y,A.aim.x-p.x),p.tur),-TUNE.turn*dt,TUNE.turn*dt);
+  p.tur+=clamp(angDiff(Math.atan2(A.aim.y-p.y,A.aim.x-p.x),p.tur),-TUNE.turn*(A.U.turn||1)*dt,TUNE.turn*(A.U.turn||1)*dt);
   // machine gun with heat
   if(A.over>0){A.over-=dt;if(A.over<=0){A.over=0;A.heat=.35}}
   A.cool-=dt;
@@ -1292,9 +1337,9 @@ function update2(dt){
     b.x+=b.vx*dt;b.y+=b.vy*dt;
     if(dist(b.x,b.y,b.sx,b.sy)>b.range){b.gone=true;puff(b.x,b.y,'#e9d7a6',2,'dust');continue}
     {const w=wallAt(b.x,b.y);if(w){b.gone=true;puff(b.x,b.y,w.hp?'#e6c07a':'#fff2b0',3,'spark');hitWall(w,b.dmg);continue}}
-    for(const e of A.enemies){if(e.dead)continue;if(dist(b.x,b.y,e.x,e.y)<e.r+b.size){hurt2(e,b.dmg);b.gone=true;puff(b.x,b.y,e.armor>1?'#fff2b0':'#ffd84a',3,'spark');break}}
+    for(const e of A.enemies){if(e.dead)continue;if(dist(b.x,b.y,e.x,e.y)<e.r+b.size){A.hits++;hurt2(e,b.dmg);b.gone=true;puff(b.x,b.y,e.armor>1?'#fff2b0':'#ffd84a',3,'spark');break}}
     if(b.gone)continue;
-    for(const s of A.structs){if(s.dead)continue;if(dist(b.x,b.y,s.x,s.y)<s.r+b.size){hurt2(s,b.dmg);b.gone=true;puff(b.x,b.y,s.kind==='hq'&&hqShielded()?'#c9a8ff':'#fff2b0',3,'spark');break}}
+    for(const s of A.structs){if(s.dead)continue;if(dist(b.x,b.y,s.x,s.y)<s.r+b.size){A.hits++;hurt2(s,b.dmg);b.gone=true;puff(b.x,b.y,s.kind==='hq'&&hqShielded()?'#c9a8ff':'#fff2b0',3,'spark');break}}
     if(b.gone)continue;
     for(const br of A.barrels){if(br.dead||br.fuse)continue;if(dist(b.x,b.y,br.x,br.y)<br.r+b.size){br.hp-=b.dmg;b.gone=true;if(br.hp<=0)br.fuse=.01;break}}
   }
@@ -1371,7 +1416,7 @@ function update2(dt){
     const I=clamp((F.maxX-400)/Math.max(400,gx-700),0,1),tm=Math.min(1,A.time/150);A.intensity=clamp(.12+I*.6+tm*.28,0,1);
     F.t-=dt;const alive=A.enemies.reduce((n,e)=>n+(!e.dead&&e.awake?1:0),0);
     if(F.t<=0&&alive<(A.camp?TUNE.cap[A.tier]:13)&&F.budget>0){F.t=(TUNE.gap[A.tier]-2.4*A.intensity*(A.tier?1.05:1))*rnd(.7,1.3);const n=Math.min(F.budget,1+Math.floor(Math.random()*(1+A.intensity*2.5)));for(let i=0;i<n;i++){spawnRush();F.budget--}}
-    if(A.time-A.lastHit>2.5)p.hp=Math.min(PV.hp,p.hp+PV.hp*.03*dt)}
+    if(A.time-A.lastHit>2.5)p.hp=Math.min(PV.hp,p.hp+PV.hp*.03*(A.U.regen||1)*dt)}
   // build site: clear the outposts, then hold the site while the bunker goes up
   if(A.site&&!A.result){const B=A.site,inZone=dist(p.x,p.y,B.x,B.y)<B.r;B.ready=!hqShielded();B.inZone=inZone;
     if(B.ready&&inZone){if(!B.started){B.started=true;B.wave=0;toast('Building the forward bunker','Keep the area under control · work stops when too many enemies are near');beep(520,.15,'triangle',.05)}
@@ -1405,7 +1450,7 @@ function update2(dt){
 }
 function endAssault(){
   A.running=false;A.firing=false;
-  if(A.camp){campaignBattleEnd(A.result==='win',`${A.kills} kills · time ${fmtTime(A.time)} · armor ${Math.round(A.p.hp/PV.hp*100)}%`);return}
+  if(A.camp){campaignBattleEnd(A.result==='win',`${A.kills} kills · time ${fmtTime(A.time)} · armor ${Math.round(A.p.hp/PV.hp*100)}%`,{bounty:A.credits-A.comboCr,combo:A.comboCr,acc:A.shots?A.hits/A.shots:0});return}
   if(A.result==='win'){
     const hpOk=A.p.hp/PV.hp>=.5,fast=A.time<=240,stars=1+(hpOk?1:0)+(fast?1:0);
     let bs=0;try{bs=+localStorage.getItem('lastBunkerCh2')||0;if(stars>bs)localStorage.setItem('lastBunkerCh2',stars)}catch(e){}
@@ -1430,7 +1475,7 @@ function updHud2(){
   $('objList').innerHTML=`<li class="${tl?'':'done'}">Gun towers ${A.nT-tl}/${A.nT}</li><li class="${dl?'':'done'}">Ammo depots ${A.nD-dl}/${A.nD}</li>`+
     (B?`<li class="${B.prog>=1?'done':B.ready?'':'lock'}">Build forward bunker ${Math.round(B.prog*100)}%</li>`:`<li class="${hq.dead?'done':hqShielded()?'lock':''}">Command HQ${hqShielded()?' (shielded)':''}</li>`);
   setAct2('canBtn2',A.canT,PV.can.cd,'CANNON');setAct2('misBtn2',A.misT,PV.mis.cd,'MISSILES');
-  {const b=$('postBtn2'),ok=A.posts.length<TUNE.maxPosts&&A.reserve>=2;b.classList.toggle('ready',ok);b.classList.toggle('locked',A.posts.length>=TUNE.maxPosts);b.style.setProperty('--p',Math.min(100,A.reserve/2*100)+'%');b.querySelector('b').textContent=`POST ${TUNE.maxPosts-A.posts.length} LEFT`}
+  {const b=$('postBtn2'),ok=A.posts.length<(A.maxPosts||TUNE.maxPosts)&&A.reserve>=2;b.classList.toggle('ready',ok);b.classList.toggle('locked',A.posts.length>=(A.maxPosts||TUNE.maxPosts));b.style.setProperty('--p',Math.min(100,A.reserve/2*100)+'%');b.querySelector('b').textContent=`POST ${(A.maxPosts||TUNE.maxPosts)-A.posts.length} LEFT`}
 }
 function setAct2(id,t,cd,label){const b=$(id);b.classList.toggle('ready',t<=0);b.style.setProperty('--p',(100-t/cd*100)+'%');b.querySelector('b').textContent=t>0?Math.ceil(t)+'s':label}
 
@@ -1718,7 +1763,7 @@ function regionFlavor(reg){const R=mulberry(reg.seed+5),pick=a=>a[Math.floor(R()
   const l2=pick(reg.terrain==='city'?['town','town','road']:reg.terrain==='forest'?['woods','woods','river']:reg.terrain==='swamp'?['river','river','woods']:reg.terrain==='rock'||reg.terrain==='snow'?['canyon','canyon','road']:reg.terrain==='volcanic'?['canyon','road','town']:['road','river','canyon','town','woods']);
   const wx=pick(WXBY[reg.terrain]);const rx=Math.round(520+R()*120);
   return{l1:{kind:l1,rx,bridges:[Math.round(110+R()*80),Math.round(340+R()*80)]},l2,wx}}
-function saveCamp(){try{localStorage.setItem('lastBunkerCampaign',JSON.stringify({v:1,seed:C.seed,built:C.built,owner:C.owner,conq:C.conq,held:C.held,lost:C.lost,fails:C.fails}))}catch(e){}}
+function saveCamp(){try{localStorage.setItem('lastBunkerCampaign',JSON.stringify({v:1,seed:C.seed,built:C.built,owner:C.owner,conq:C.conq,held:C.held,lost:C.lost,fails:C.fails,money:C.money,earned:C.earned,up:C.up,bank:C.bank}))}catch(e){}}
 function loadCamp(){try{const s=JSON.parse(localStorage.getItem('lastBunkerCampaign')||'null');return s&&s.v===1&&s.owner&&s.owner.length===NREG?s:null}catch(e){return null}}
 function campaignCard(){const s=loadCamp();$('ch3Btn').textContent=s?'Continue':'Start';$('ch3New').hidden=!s;$('ch3New').textContent='New campaign';$('ch3New').dataset.arm='';
   $('ch3Info').textContent=s?`${s.owner.reduce((a,b)=>a+b,0)} of ${NREG} regions held`:''}
@@ -1729,9 +1774,11 @@ function startCampaign(fresh){
   setTimeout(()=>{
     const seed=s?s.seed:Math.floor(Math.random()*1e9);
     C={running:true,paused:false,seed,built:s&&s.built?s.built:[],owner:s?s.owner:new Array(NREG).fill(0),conq:s?s.conq:0,held:s?s.held:0,lost:s?s.lost:0,fails:s?s.fails:0,
-       phase:'idle',t:1.2,choice:[],target:null,attacker:null,sel:null,flash:null,battle:null};
+       phase:'idle',t:1.2,choice:[],target:null,attacker:null,sel:null,flash:null,battle:null,
+       money:s&&s.money!=null?s.money:600,earned:s&&s.earned||0,up:s&&s.up||{},bank:s&&s.bank||{id:START,lvl:0},moveBank:false};
     genWorld(seed);if(!s)C.owner[START]=1;
     if(!owned())C.owner[START]=1;
+    if(!C.owner[C.bank.id])C.bank={id:firstOwned(),lvl:0};
     paintMap();saveCamp();
     $('genMsg').hidden=true;enterMap();
     toastQ=[];toast(s?'Campaign resumed':'Conquest',s?`${owned()} of ${NREG} regions held`:'Capture all 100 regions');
@@ -1752,6 +1799,7 @@ function update3(dt){
     MV.x=a.cx0+(a.cx-a.cx0)*k-W/2/MV.z;MV.y=a.cy0+(a.cy-a.cy0)*k-H/2/MV.z;if(e>=1){MV.anim=null;MV.zoomed=a.z1>W/MW+.01;clampView();updHud3()}}
   if(MV.tx!==null){MV.x+=(MV.tx-MV.x)*Math.min(1,dt*5);MV.y+=(MV.ty-MV.y)*Math.min(1,dt*5);if(Math.abs(MV.tx-MV.x)<1&&Math.abs(MV.ty-MV.y)<1)MV.tx=MV.ty=null;clampView()}
   if(['won','lost','battle','launch'].includes(C.phase)&&C.phase!=='launch')return;
+  if(C.moveBank)return;
   C.t-=dt;
   if(C.phase==='idle'&&C.t<=0)roll();
   else if(C.phase==='enemy'&&C.t<=0)startBattle('defend',C.target);
@@ -1763,13 +1811,16 @@ function roll(){
   if(owned()>=NREG){setPhase('won');return}
   const fr=frontierUs();
   if(Math.random()<.5&&fr.length){
-    const tgt=fr[Math.floor(Math.random()*fr.length)],att=[...REG[tgt].adj].filter(b=>!C.owner[b]);
-    C.target=tgt;C.attacker=att[Math.floor(Math.random()*att.length)];
+    let tgt=fr[Math.floor(Math.random()*fr.length)];const tb=C.bank.id;C.raid=false;
+    if(C.owner[tb]&&tb!==tgt){if(fr.includes(tb)?Math.random()<.3:Math.random()<.12){tgt=tb;C.raid=!fr.includes(tb)}}
+    let att=[...REG[tgt].adj].filter(b=>!C.owner[b]);if(!att.length){let bd=1e9,bi=null;for(const r of REG)if(!C.owner[r.id]){const d=dist(r.cx,r.cy,REG[tgt].cx,REG[tgt].cy);if(d<bd){bd=d;bi=r.id}}att=bi!=null?[bi]:[tgt]}
+    C.target=tgt;C.attacker=att[Math.floor(Math.random()*att.length)];if(tgt===tb&&owned()>3)toast(C.raid?'Raid on your treasury!':'Enemy targets your treasury!',`${fmtCr(C.money)} stored in ${REG[tb].name}`);
     setPhase('enemy',3.8);zoomTo(REG[tgt].cx,REG[tgt].cy,1.35,.9);beep(220,.25,'sawtooth',.05);setTimeout(()=>beep(180,.3,'sawtooth',.05),220);
   }else{C.choice=attackable();C.target=null;setPhase('choose',5);if(MV.zoomed||MV.z>W/MW+.01)zoomTo(MW/2,MH/2,W/MW,.6);beep(660,.1,'triangle',.05)}
 }
 function tapRegion(id){
   C.sel=id;
+  if(C.moveBank){moveBankTo(id);return}
   if(C.phase==='choose'&&C.choice.includes(id)){C.target=id;setPhase('launch',.8);beep(520,.12,'square',.05);return}
   updHud3();
 }
@@ -1778,25 +1829,35 @@ function startBattle(kind,id){
   C.battle={kind,id,st};C.phase='battle';C.running=false;$('hud3').hidden=true;
   if(kind==='defend'){
     const fl=regionFlavor(reg);buildGround(T,fl.l1);setWeather(fl.wx);mode=1;A.running=false;$('hud1').hidden=false;$('hud2').hidden=true;toastQ=[];
-    reset({name:reg.name,label:T.label,stage:st,wave0:Math.max(1,Math.round(st*.45+Math.max(0,st-10)*.3+reg.diff*2.5)),layout:regionFlavor(reg).l1,fortBonus:C.built[id]?1:0,waves:3,ease:Math.max(.55,1-.15*(C.lossStreak||0))});
-    {const fl=regionFlavor(reg);toast('Defend '+reg.name,`${T.label} · ${LAYOUT1[fl.l1.kind]} · ${WXNAME[fl.wx]}`);toast('Survive 3 waves',C.built[id]?'Your forward bunker holds this region':'')}
+    reset({name:reg.name,label:T.label,stage:st,wave0:Math.max(1,Math.round(st*.45+Math.max(0,st-10)*.3+reg.diff*2.5)),layout:regionFlavor(reg).l1,fortBonus:(C.built[id]?1:0)+(C.bank.id===id?BANKS[C.bank.lvl].fort:0),waves:3,ease:Math.max(.55,1-.15*(C.lossStreak||0))});
+    {const fl=regionFlavor(reg);toast('Defend '+reg.name,`${T.label} · ${LAYOUT1[fl.l1.kind]} · ${WXNAME[fl.wx]}`);toast('Survive 3 waves',C.bank.id===id?`Your treasury is here: ${fmtCr(C.money)} at stake`:C.built[id]?'Your forward bunker holds this region':'')}
   }else{
     {const fl=regionFlavor(reg);startAssault({map:genAssault(reg,k,fl.l2),terrain:reg.terrain,k,name:reg.name,weather:fl.wx})}
   }
 }
-function campaignBattleEnd(win,info){
+function campaignBattleEnd(win,info,st){
   const b=C.battle;if(!b)return;const reg=REG[b.id];C.battle=null;
-  let title,msg;
+  let title,msg;const rank0=rankOf(C.earned),wasBank=C.bank.id===b.id;
   if(b.kind==='defend'){C.lossStreak=win?0:(C.lossStreak||0)+1;if(win){C.held++;title='Region Held';msg=`${reg.name} stays ours.`}else{C.owner[b.id]=0;C.lost++;title='Region Lost';msg=`The enemy took ${reg.name}.`}}
   else{if(win){C.owner[b.id]=1;C.conq++;C.built[b.id]=1;title='Region Captured';msg=`Forward bunker built in ${reg.name}. It will defend this region one fortification level stronger.`}else{C.fails++;title='Attack Failed';msg=`${reg.name} is still in enemy hands.`}}
+  const pay=payout(b,reg,win,st||{bounty:0,combo:0,acc:0});
+  let bankMsg='';
+  if(b.kind==='defend'&&!win&&wasBank){const L=BANKS[C.bank.lvl],lost=Math.round(C.money*L.loss);C.money-=lost;const nid=firstOwned();
+    bankMsg=`<div class="payLoss">${L.name} in ${reg.name} lost: −${fmtCr(lost)}${L.loss<1?` · the vault saved ${Math.round((1-L.loss)*100)}%`:''}</div>`;C.bank={id:nid,lvl:0};
+    if(nid!=null)bankMsg+=`<div class="paySub">Survivors carried the rest to a field safe in ${REG[nid].name}</div>`}
+  C.money+=pay.total;C.earned+=pay.total;
+  let interest=0;const BL=BANKS[C.bank.lvl];if(win&&BL.rate&&C.owner[C.bank.id]){interest=Math.min(BL.cap,Math.round(C.money*BL.rate));C.money+=interest}
   const up=campStage(C.conq)>b.st?unlockText(b.st,campStage(C.conq)):'';
+  const rank1=rankOf(C.earned),promo=rank1!==rank0?'Promoted to '+RANKS[rank1][1]:'';
   const mk=Math.floor(C.conq/10),mk0=Math.floor((C.conq-(b.kind==='attack'&&win?1:0))/10);
   C.flash={id:b.id,t:2.2,good:win};C.lastResult={title,msg};
   paintMap();saveCamp();
   const n=owned();
   $('ceTitle').textContent=n>=NREG?'Total Victory':n===0?'Campaign Lost':title;
   $('ceInfo').innerHTML=msg+'<br>'+(info||'')+`<br>Territory: <b>${n} / ${NREG}</b>`;
-  $('ceUp').textContent=[up,mk>mk0?`Assault vehicle upgraded to Mk ${mk+1}`:''].filter(Boolean).join(' · ');
+  $('cePay').innerHTML=pay.html+(interest?`<div class="payRow"><span>Interest from ${BL.name}</span><b>+${fmtCr(interest)}</b></div>`:'')+bankMsg+
+    `<div class="payTot"><span>Treasury</span><b>${fmtCr(C.money)}</b></div>`;
+  $('ceUp').textContent=[promo,up,mk>mk0?`Assault vehicle upgraded to Mk ${mk+1}`:''].filter(Boolean).join(' · ');
   $('ceBack').textContent=n===0?'Main Menu':'Back to Map';
   if(n===0){try{localStorage.removeItem('lastBunkerCampaign')}catch(e){}}
   $('campEnd').hidden=false;
@@ -1809,6 +1870,87 @@ function backToMap(){
   if(owned()>=NREG)setPhase('won');else setPhase('idle',1.6);
   const r=REG[C.flash?C.flash.id:START];MV.z=1.2;MV.zoomed=true;MV.x=r.cx-W/2/1.2;MV.y=r.cy-H/2/1.2;clampView();zoomTo(MW/2,MH/2,W/MW,1.2);
 }
+// ---------- economy: pay, armory, treasury ----------
+const UPG=[
+ ['gun','gdmg','Bullet damage','damage of every gun bullet',.04,15,320],
+ ['gun','grate','Fire rate','shots per second',.03,15,360],
+ ['gun','grng','Gun range','how far the gun reaches',.025,12,280],
+ ['gun','gacc','Barrel accuracy','less bullet spread',-.05,10,240],
+ ['gun','gcool','Cooling & reload','less heat per shot, faster bunker reload',-.04,10,280],
+ ['gun','gturn','Turret drive','vehicle turret turns faster',.04,10,320],
+ ['can','cdmg','Shell damage','cannon hit damage',.05,12,480],
+ ['can','csplash','Blast radius','cannon splash area',.04,10,400],
+ ['can','ccd','Autoloader','cannon reload time',-.03,12,440],
+ ['mis','mdmg','Warheads','missile damage',.05,12,560],
+ ['mis','mcd','Launcher reload','missile reload time',-.03,12,520],
+ ['mis','msalvo','Extra rail','one more missile per salvo',1,3,6000],
+ ['arm','hp','Armor plating','vehicle and bunker hit points',.04,15,360],
+ ['arm','guard','Spaced armor','damage you take',-.02,10,480],
+ ['arm','regen','Field repair','vehicle self-repair speed',.08,10,320],
+ ['sq','shp','Body armor','squad soldier health',.05,12,280],
+ ['sq','sdmg','Squad weapons','squad soldier damage',.04,12,280],
+ ['sq','sres','Reinforcements','+1 soldier ready at the start',1,4,2000],
+ ['sq','spost','Engineers','+1 squad post per battle',1,2,5000],
+ ['amm','ap','AP rounds','enemy armor stops less damage',-.06,8,600],
+ ['amm','bounty','Bounty contracts','more pay for every kill',.03,10,800],
+];
+const UPCAT=[['gun','Machine gun'],['can','Cannon'],['mis','Missiles'],['arm','Armor'],['sq','Squads'],['amm','Ammo & pay']];
+const UPI=Object.fromEntries(UPG.map(u=>[u[1],u]));
+const lvlOf=id=>(C&&C.up&&C.up[id])||0;
+const isAdd=u=>Number.isInteger(u[4]);
+function upg(id){const u=UPI[id],L=lvlOf(id);return isAdd(u)?L*u[4]:Math.max(.3,1+u[4]*L)}
+const upPrice=(u,L)=>Math.round(u[6]*Math.pow(isAdd(u)?2:1.22,L)/5)*5;
+const upFx=(u,L)=>isAdd(u)?`+${L*u[4]}`:(u[4]>0?'+':'−')+Math.round(Math.abs(u[4])*L*100)+'%';
+function applyUpgradesDefense(){const u=upg,g=GUNS[S.gun];
+  S.gunX={...g,dmg:g.dmg*u('gdmg'),rate:g.rate*u('grate'),range:g.range*u('grng'),spread:g.spread*u('gacc'),reload:g.reload*u('gcool'),mag:Math.round(g.mag*(1+.03*lvlOf('gcool')))};S.ammo=S.gunX.mag;
+  if(S.cannon){const c=CANNON[S.cannon];S.canX={...c,dmg:c.dmg*u('cdmg'),splash:c.splash*u('csplash'),cd:c.cd*u('ccd')}}
+  if(S.missile){const m=MISSILE[S.missile];S.misX={...m,dmg:m.dmg*u('mdmg'),cd:m.cd*u('mcd'),salvo:m.salvo+u('msalvo')}}
+  S.maxHp=S.hp=Math.round(S.maxHp*u('hp'));S.guard=u('guard');S.ap=u('ap')}
+const BANKS=[{name:'Field safe',cost:0,loss:1,fort:0,rate:0,cap:0,desc:'Loses everything if the region falls'},
+ {name:'Bank',cost:6000,loss:.5,fort:1,rate:.02,cap:1000,desc:'Loses half · +1 bunker level · 2% interest per win'},
+ {name:'Armored vault',cost:20000,loss:.2,fort:2,rate:.03,cap:3000,desc:'Loses only 20% · +2 bunker levels · 3% interest per win'}];
+const RANKS=[[0,'Private'],[5000,'Corporal'],[15000,'Sergeant'],[35000,'Lieutenant'],[70000,'Captain'],[130000,'Major'],[220000,'Colonel'],[350000,'Brigadier'],[500000,'General']];
+const rankOf=e=>{let i=0;while(RANKS[i+1]&&e>=RANKS[i+1][0])i++;return i};
+const fmtCr=n=>Math.round(n).toLocaleString('en-US')+' cr';
+const firstOwned=()=>{if(C.owner[START])return START;const i=C.owner.indexOf(1);return i<0?null:i};
+const moveCost=()=>800+Math.round(BANKS[C.bank.lvl].cost*.25);
+function payout(b,reg,win,st){
+  const rows=[],add=(t,v)=>{if(v)rows.push([t,v])};
+  const bounty=Math.round(st.bounty),combo=Math.round(st.combo||0),acc=Math.round(bounty*.3*Math.min(1,st.acc||0));
+  add('Kill bounty',bounty);add('Kill streaks',combo);add(`Accuracy ${Math.round((st.acc||0)*100)}%`,acc);
+  if(win)add(b.kind==='attack'?'Region captured':'Region held',Math.round((b.kind==='attack'?400:250)+reg.diff*(b.kind==='attack'?600:400)));
+  let sub=rows.reduce((a,r)=>a+r[1],0);
+  const danger=Math.round(sub*reg.diff*.5);add(`Danger pay ${'★'.repeat(1+Math.round(reg.diff*4))}`,danger);sub+=danger;
+  const con=Math.round(sub*(upg('bounty')-1));add('Bounty contracts',con);sub+=con;
+  if(!win){const cut=-Math.round(sub*.5);add(b.kind==='attack'?'Retreat: half pay':'Defeat: half pay',cut);sub+=cut}
+  return{total:sub,html:rows.map(([t,v])=>`<div class="payRow"><span>${t}</span><b>${v<0?'−'+fmtCr(-v):'+'+fmtCr(v)}</b></div>`).join('')}}
+let shopCat='gun';
+function openShop(){if(mode!==3||!C.owner)return;C.paused=true;$('shopMenu').hidden=false;renderShop()}
+function closeShop(){$('shopMenu').hidden=true;C.paused=false;updHud3()}
+function renderShop(){
+  $('shopMoney').textContent=fmtCr(C.money);
+  $('shopTabs').innerHTML=UPCAT.map(([k,n])=>`<button type="button" data-cat="${k}" class="${k===shopCat?'on':''}">${n}</button>`).join('');
+  $('upList').innerHTML=UPG.filter(u=>u[0]===shopCat).map(u=>{const L=lvlOf(u[1]),mx=u[5],pr=upPrice(u,L),full=L>=mx;
+    return `<div class="up"><h3>${u[2]} <span class="lbl">Lv ${L}/${mx}</span></h3><p>${u[3]} · now ${L?upFx(u,L):'base'}${full?'':' → '+upFx(u,L+1)}</p>
+      <div class="pips">${Array.from({length:mx},(_,i)=>`<i class="${i<L?'on':''}"></i>`).join('')}</div>
+      <button type="button" data-up="${u[1]}" ${full||C.money<pr?'disabled':''}>${full?'MAX':fmtCr(pr)}</button></div>`}).join('')}
+function buyUp(id){const u=UPI[id],L=lvlOf(id);if(L>=u[5])return;const pr=upPrice(u,L);if(C.money<pr)return;
+  C.money-=pr;C.up[id]=L+1;saveCamp();beep(880,.08,'triangle',.05);setTimeout(()=>beep(1180,.1,'triangle',.05),70);renderShop()}
+function openBank(){if(mode!==3||!C.owner)return;C.paused=true;$('bankMenu').hidden=false;renderBank()}
+function closeBank(){$('bankMenu').hidden=true;C.paused=false;updHud3()}
+function renderBank(){const B=C.bank,cur=BANKS[B.lvl];
+  $('bankMoney').textContent=fmtCr(C.money);
+  $('bankWhere').innerHTML=`Your money is in a <b>${cur.name}</b> in <b>${REG[B.id].name}</b>. ${cur.loss>=1?'If that region falls, you lose it all.':`If that region falls, you lose ${Math.round(cur.loss*100)}%.`}`;
+  $('bankList').innerHTML=BANKS.map((k,i)=>`<div class="up"><h3>${k.name}</h3><p>${k.desc}</p><p></p>
+    <button type="button" data-bank="${i}" ${i<=B.lvl||C.money<k.cost?'disabled':''}>${i<B.lvl?'Built':i===B.lvl?'Current':fmtCr(k.cost)}</button></div>`).join('');
+  $('bankMove').textContent=`Move treasury · ${fmtCr(moveCost())}`;$('bankMove').disabled=C.money<moveCost()}
+function buyBank(i){if(i<=C.bank.lvl)return;let cost=0;for(let j=C.bank.lvl+1;j<=i;j++)cost=BANKS[i].cost;if(C.money<cost)return;
+  C.money-=cost;C.bank.lvl=i;saveCamp();beep(520,.12,'square',.05);setTimeout(()=>beep(780,.14,'triangle',.05),90);renderBank()}
+function moveBankTo(id){
+  if(id===C.bank.id){C.moveBank=false;toast('Treasury stays',REG[id].name);updHud3();return}
+  if(!C.owner[id]){toast('Not your region','Tap a blue region');return}
+  const c=moveCost();if(C.money<c){C.moveBank=false;toast('Not enough money','');updHud3();return}
+  C.money-=c;C.bank.id=id;C.moveBank=false;saveCamp();toast('Treasury moved',`${BANKS[C.bank.lvl].name} now in ${REG[id].name}`);beep(620,.12,'triangle',.05);updHud3()}
 function arsenalText(){const st=campStage(C.conq),g={gun:0,cannon:0,missile:0,air:0};for(let i=0;i<=st;i++){const s=STAGES[i];if(s.k==='gun')g.gun=s.lv;else g[s.k]=s.lv}
   const F=FORTS.reduce((a,f)=>f.stage<=st?f:a,FORTS[0]);
   return{gun:GUNS[g.gun].name,extra:[g.cannon&&'Cannon '+g.cannon,g.missile&&'Missiles '+g.missile,g.air&&'Air '+g.air].filter(Boolean).join(' · ')||'No heavy weapons yet',fort:F.name,mk:1+Math.floor(C.conq/10)}}
@@ -1829,6 +1971,9 @@ function updHud3(){
   if(showT)tb.firstElementChild.style.width=Math.max(0,C.t/C.T*100)+'%';
   $('cAct').hidden=ph!=='enemy';
   $('cZoom').textContent=MV.zoomed?'Whole map':'Zoom in';
+  const rk=rankOf(C.earned);$('cRank').textContent=RANKS[rk][1]+(RANKS[rk+1]?` · next at ${fmtCr(RANKS[rk+1][0])} earned`:'');
+  $('cMoney').textContent=fmtCr(C.money);$('cBankTxt').textContent=`${BANKS[C.bank.lvl].name} in ${REG[C.bank.id]?REG[C.bank.id].name:'—'}`;
+  if(C.moveBank){$('cTitle').textContent='Move the treasury';$('cSub').textContent=`Tap one of your regions · costs ${fmtCr(moveCost())} · tap the treasury to cancel`}
 }
 function clampView(){const vw=W/MV.z,vh=H/MV.z,m=MV.zoomed?60:90;MV.x=clamp(MV.x,-m,Math.max(-m,MW-vw+m));MV.y=clamp(MV.y,-m,Math.max(-m,MH-vh+m))}
 function toggleZoom(){MV.zoomed=!MV.zoomed;const fr=frontierUs(),f=REG[C.target!=null?C.target:fr.length?fr[Math.floor(fr.length/2)]:START],cx=MV.zoomed?f.cx:MV.x+W/2/MV.z,cy=MV.zoomed?f.cy:MV.y+H/2/MV.z;MV.z=MV.zoomed?1:W/MW;MV.x=cx-W/2/MV.z;MV.y=cy-H/2/MV.z;MV.tx=MV.ty=null;if(!MV.zoomed){MV.x=0;MV.y=0}clampView();updHud3()}
@@ -1862,6 +2007,9 @@ function draw3(){
     if(C.owner[r.id]){ctx.strokeStyle='#fff';ctx.lineWidth=2;if(C.built[r.id]&&r.id!==START){rr(x-7,y-7,14,14,3,'#2f8cff',true);ctx.fillStyle='#fff';ctx.fillRect(x-3,y-3,6,6)}else circ(x,y,r.id===START?9:6.5,r.id===START?'#ffc93c':'#2f8cff',true)}
     else{ctx.strokeStyle='rgba(60,10,25,.8)';ctx.lineWidth=1.5;circ(x,y,4.5,r.diff<.34?'#ff9aaa':r.diff<.67?'#ff4d5e':'#b0102a',true)}
     terrainIcon(r.terrain,x,y-15,MV.zoomed?1.25:1);
+    if(r.id===C.bank.id&&C.owner[r.id]){const bx=x+11,by=y-9;ctx.globalCompositeOperation='lighter';drawGlow('#ffc93c',bx,by,16+pulse*4,.5);ctx.globalCompositeOperation='source-over';
+      ctx.strokeStyle='rgba(60,40,0,.9)';ctx.lineWidth=1.5;rr(bx-7,by-6,14,12,3,C.bank.lvl===2?'#ffe08a':C.bank.lvl===1?'#ffc93c':'#d99a2b',true);ctx.fillStyle='#3a2600';ctx.font='800 9px Rubik,system-ui';ctx.textAlign='center';ctx.fillText('$',bx,by+3.5)}
+    if(C.moveBank&&C.owner[r.id]){ctx.strokeStyle=`rgba(255,215,90,${.5+.5*pulse})`;ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y,12+pulse*2,0,7);ctx.stroke()}
     if(C.sel===r.id){ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.setLineDash([4,4]);ctx.beginPath();ctx.arc(x,y,14,0,7);ctx.stroke();ctx.setLineDash([])}
     if(showNames||C.sel===r.id||(C.phase!=='idle'&&r.id===C.target)){ctx.lineJoin='round';ctx.font='700 11px Rubik,system-ui';ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='rgba(10,20,40,.75)';ctx.strokeText(r.name,x,y+20);ctx.fillStyle='#fff';ctx.fillText(r.name,x,y+20)}
   }
@@ -1890,6 +2038,12 @@ cv.addEventListener('wheel',ev=>{if(mode!==3)return;ev.preventDefault();if((ev.d
 $('cZoom').addEventListener('click',toggleZoom);
 $('cAct').addEventListener('click',()=>{if(C.phase==='enemy')startBattle('defend',C.target)});
 $('ceBack').addEventListener('click',backToMap);
+$('shopBtn').addEventListener('click',openShop);$('shopClose').addEventListener('click',closeShop);
+$('bankBtn').addEventListener('click',openBank);$('bankClose').addEventListener('click',closeBank);
+$('shopTabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b){shopCat=b.dataset.cat;renderShop()}});
+$('upList').addEventListener('click',e=>{const b=e.target.closest('button[data-up]');if(b&&!b.disabled)buyUp(b.dataset.up)});
+$('bankList').addEventListener('click',e=>{const b=e.target.closest('button[data-bank]');if(b&&!b.disabled)buyBank(+b.dataset.bank)});
+$('bankMove').addEventListener('click',()=>{if(C.money<moveCost())return;closeBank();C.moveBank=true;toast('Move the treasury','Tap one of your regions');updHud3()});
 $('ch3Btn').addEventListener('click',()=>startCampaign(false));
 $('ch3New').addEventListener('click',()=>{const b=$('ch3New');if(b.dataset.arm){startCampaign(true)}else{b.dataset.arm='1';b.textContent='Tap again to erase progress'}});
 campaignCard();
