@@ -72,10 +72,11 @@ button.ghost{font:700 clamp(12px,1.6vw,15px) var(--ui);letter-spacing:.06em;back
 .tabs{display:flex;gap:6px;flex-wrap:wrap}.tabs button{font:700 clamp(11px,1.4vw,14px) var(--ui);padding:.45em .9em;border-radius:999px;border:1px solid var(--glass-line);background:rgba(255,255,255,.06);color:var(--ink);cursor:pointer}
 .tabs button.on{background:var(--gold);color:#1a1300;border-color:transparent}
 .upList,.bankList{display:flex;flex-direction:column;gap:6px;overflow:auto;max-height:52vh}
-.up{display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center;background:rgba(255,255,255,.05);border:1px solid var(--glass-line);border-radius:14px;padding:8px 10px}
-.up h3{margin:0;font:700 clamp(13px,1.6vw,16px) var(--ui);color:#fff}.up p{margin:0;font-size:clamp(11px,1.3vw,13px);color:var(--muted)}
-.pips{display:flex;gap:2px;grid-column:1}.pips i{flex:1;max-width:16px;height:6px;border-radius:3px;background:rgba(255,255,255,.14)}.pips i.on{background:var(--gold)}
-.up button{grid-row:1/4;grid-column:2;min-width:6.5em;font:800 clamp(12px,1.5vw,15px) var(--ui);padding:.55em .8em;border-radius:12px;border:0;background:var(--gold);color:#1a1300;cursor:pointer}
+.up{display:grid;grid-template-columns:auto 1fr auto;gap:2px 10px;align-items:center;background:rgba(255,255,255,.05);border:1px solid var(--glass-line);border-radius:14px;padding:8px 10px}
+.upIco{grid-row:1/4;grid-column:1;width:clamp(42px,6vw,56px);height:clamp(42px,6vw,56px);background:rgba(255,255,255,.05);border-radius:12px;padding:3px}.upIco.t3{background:rgba(255,201,60,.14);box-shadow:0 0 12px rgba(255,201,60,.35)}
+.up h3,.up p{grid-column:2}.up h3{margin:0;font:700 clamp(13px,1.6vw,16px) var(--ui);color:#fff}.up p{margin:0;font-size:clamp(11px,1.3vw,13px);color:var(--muted)}
+.pips{display:flex;gap:2px;grid-column:2}.pips i{flex:1;max-width:16px;height:6px;border-radius:3px;background:rgba(255,255,255,.14)}.pips i.on{background:var(--gold)}
+.up button{grid-row:1/4;grid-column:3;min-width:6.5em;font:800 clamp(12px,1.5vw,15px) var(--ui);padding:.55em .8em;border-radius:12px;border:0;background:var(--gold);color:#1a1300;cursor:pointer}
 .up button:disabled{background:rgba(255,255,255,.1);color:var(--muted);cursor:default}
 .hint{margin:0;font-size:12px;color:var(--muted)}
 #cePay{width:100%;max-width:420px;margin:6px auto;display:flex;flex-direction:column;gap:3px;font-size:clamp(12px,1.5vw,15px)}
@@ -313,7 +314,7 @@ let errShown=false;
 function showErr(e){if(errShown)return;errShown=true;const d=document.createElement('div');d.style.cssText='position:fixed;left:12px;right:12px;bottom:12px;z-index:99;background:#7a1830;color:#fff;font:13px system-ui;padding:10px 12px;border-radius:10px';d.textContent='Game error: '+(e&&e.message||e);document.body.appendChild(d)}
 addEventListener('error',ev=>showErr(ev.error||ev.message));
 const $=id=>document.getElementById(id);
-const cv=$('c'),ctx=cv.getContext('2d');
+const cv=$('c');let ctx=cv.getContext('2d');
 const W=960,H=540,BK={x:112,y:270,r:42};
 const rnd=(a,b)=>a+Math.random()*(b-a);
 const dist=(a,b,c,d)=>Math.hypot(a-c,b-d);
@@ -584,7 +585,7 @@ function explode(x,y,radius,dmg){
 // ---------- player weapons ----------
 function startReload(){const w=gun();if(S.reloading>0||S.ammo===w.mag)return;S.reloading=w.reload;beep(300,.05,'square',.03);setTimeout(()=>beep(440,.05,'square',.03),120);updHud()}
 function fire(){
-  const w=gun();
+  const w=gun();if(S.dieT!=null)return;
   if(S.reloading>0)return;
   if(S.ammo<=0){startReload();return}
   S.ammo--;S.shots++;
@@ -801,7 +802,14 @@ function update(dt){
   for(const t of S.texts){t.life-=dt;t.y-=dt*30}S.texts=S.texts.filter(t=>t.life>0);
   if(S.texts.length>40)S.texts.splice(0,S.texts.length-40);
   S.shake=Math.max(0,S.shake-dt);S.flash=Math.max(0,S.flash-dt);S.hurt=Math.max(0,S.hurt-dt);
-  if(S.hp<=0)gameOver();
+  if(S.vaultHit>0)S.vaultHit-=dt;
+  if(S.hp<=0){
+    if(!S.camp)gameOver();
+    else if(S.dieT==null){S.dieT=2.4;S.firing=false;blast(BK.x,BK.y,BK.r*2.4);debris(BK.x,BK.y,36);smoke(BK.x,BK.y,10,30);boom(.22,.9);S.shake=.6;S.flash=.35;
+      if(S.camp.bank){const v=S.camp.bank,lossF=BANKS[v.lvl].loss;S.vaultHit=.3;setTimeout(()=>{if(mode!==1||!S.camp)return;const vx=60,vy=BK.y+100;blast(vx,vy,70);debris(vx,vy,20);for(let i=0;i<4;i++)puff(vx,vy,'#ffc93c',14,'spark');
+        if(lossF>=1)S.vaultGone=true;S.texts.push({x:vx+30,y:vy-40,t:`−${fmtCr(v.money*lossF)}`,life:2,big:true});boom(.2,.7)},700)}}
+    else{S.dieT-=dt;if(S.dieT<=0){S.dieT=1e9;gameOver()}}
+  }
 }
 function puff(x,y,col,n,type){for(let i=0;i<n;i++){const l=rnd(.2,.45);FX.parts.push({x,y,vx:rnd(-170,170),vy:rnd(-170,170),life:l,max:l,col,r:rnd(1.5,3.2),type})}}
 function smoke(x,y,n,spread){for(let i=0;i<n;i++){const l=rnd(.6,1.1);FX.parts.push({x:x+rnd(-spread,spread),y:y+rnd(-spread,spread),vx:rnd(-30,30),vy:rnd(-30,30),life:l,max:l,col:'#c9cfd8',r:rnd(6,12),type:'smoke'})}}
@@ -817,6 +825,11 @@ function draw(){
   ctx.globalAlpha=1;
   drawRanges();
   for(const e of S.enemies)if(!e.air)drawEnemy(e);
+  if(S.camp&&S.camp.bank){const v=S.camp.bank,vx=60,vy=BK.y+100;
+    if(!S.vaultGone){drawVault(vx,vy,v.lvl,1.2,S.vaultHit>0);ctx.lineJoin='round';ctx.textAlign='left';ctx.lineWidth=3;ctx.strokeStyle='rgba(10,20,40,.8)';
+      ctx.font='800 10px Rubik,system-ui';const t1=BANKS[v.lvl].name.toUpperCase(),t2=fmtCr(v.money);ctx.strokeText(t1,vx+34,vy-4);ctx.fillStyle='#fff';ctx.fillText(t1,vx+34,vy-4);
+      ctx.font='800 14px Rubik,system-ui';ctx.strokeText(t2,vx+34,vy+13);ctx.fillStyle='#ffd25a';ctx.fillText(t2,vx+34,vy+13)}
+    else{ctx.globalAlpha=.8;circ(vx,vy+6,22,'#2a2a22');ctx.globalAlpha=1}}
   drawBunker();
   for(const s of S.shells){if(s.t<0)continue;const p=Math.min(1,s.t/s.dur);ctx.fillStyle='rgba(10,40,20,.3)';ctx.beginPath();ctx.ellipse(s.sx+(s.tx-s.sx)*p,s.sy+(s.ty-s.sy)*p,4,3,0,0,7);ctx.fill()}
   for(const b of S.bombs){if(b.t<1){const p=1-b.t;ctx.strokeStyle=`rgba(255,80,80,${.5*p})`;ctx.lineWidth=2;ctx.beginPath();ctx.arc(b.x,b.y,20*(1-p)+6,0,7);ctx.stroke()}}
@@ -1774,7 +1787,7 @@ function startCampaign(fresh){
   setTimeout(()=>{
     const seed=s?s.seed:Math.floor(Math.random()*1e9);
     C={running:true,paused:false,seed,built:s&&s.built?s.built:[],owner:s?s.owner:new Array(NREG).fill(0),conq:s?s.conq:0,held:s?s.held:0,lost:s?s.lost:0,fails:s?s.fails:0,
-       phase:'idle',t:1.2,choice:[],target:null,attacker:null,sel:null,flash:null,battle:null,
+       phase:'plan',t:0,choice:[],target:null,attacker:null,sel:null,flash:null,battle:null,
        money:s&&s.money!=null?s.money:600,earned:s&&s.earned||0,up:s&&s.up||{},bank:s&&s.bank||{id:START,lvl:0},moveBank:false};
     genWorld(seed);if(!s)C.owner[START]=1;
     if(!owned())C.owner[START]=1;
@@ -1803,7 +1816,7 @@ function update3(dt){
   C.t-=dt;
   if(C.phase==='idle'&&C.t<=0)roll();
   else if(C.phase==='enemy'&&C.t<=0)startBattle('defend',C.target);
-  else if(C.phase==='choose'&&C.t<=0){toast('No orders given','The front holds');setPhase('idle',1.4)}
+  else if(C.phase==='choose'&&C.t<=0){toast('No orders given','The front holds');setPhase('plan')}
   else if(C.phase==='launch'&&C.t<=0)startBattle('attack',C.target);
   if(C.phase==='choose'||C.phase==='enemy')updHud3();
 }
@@ -1829,7 +1842,7 @@ function startBattle(kind,id){
   C.battle={kind,id,st};C.phase='battle';C.running=false;$('hud3').hidden=true;
   if(kind==='defend'){
     const fl=regionFlavor(reg);buildGround(T,fl.l1);setWeather(fl.wx);mode=1;A.running=false;$('hud1').hidden=false;$('hud2').hidden=true;toastQ=[];
-    reset({name:reg.name,label:T.label,stage:st,wave0:Math.max(1,Math.round(st*.45+Math.max(0,st-10)*.3+reg.diff*2.5)),layout:regionFlavor(reg).l1,fortBonus:(C.built[id]?1:0)+(C.bank.id===id?BANKS[C.bank.lvl].fort:0),waves:3,ease:Math.max(.55,1-.15*(C.lossStreak||0))});
+    reset({name:reg.name,label:T.label,stage:st,wave0:Math.max(1,Math.round(st*.45+Math.max(0,st-10)*.3+reg.diff*2.5)),layout:regionFlavor(reg).l1,fortBonus:(C.built[id]?1:0)+(C.bank.id===id?BANKS[C.bank.lvl].fort:0),bank:C.bank.id===id?{lvl:C.bank.lvl,money:C.money}:null,waves:3,ease:Math.max(.55,1-.15*(C.lossStreak||0))});
     {const fl=regionFlavor(reg);toast('Defend '+reg.name,`${T.label} · ${LAYOUT1[fl.l1.kind]} · ${WXNAME[fl.wx]}`);toast('Survive 3 waves',C.bank.id===id?`Your treasury is here: ${fmtCr(C.money)} at stake`:C.built[id]?'Your forward bunker holds this region':'')}
   }else{
     {const fl=regionFlavor(reg);startAssault({map:genAssault(reg,k,fl.l2),terrain:reg.terrain,k,name:reg.name,weather:fl.wx})}
@@ -1867,7 +1880,7 @@ function backToMap(){
   $('campEnd').hidden=true;
   if(owned()===0){goMenu();return}
   setWeather('clear');buildGround(THEMES.grass,{kind:'road'});enterMap();
-  if(owned()>=NREG)setPhase('won');else setPhase('idle',1.6);
+  if(owned()>=NREG)setPhase('won');else setPhase('plan');
   const r=REG[C.flash?C.flash.id:START];MV.z=1.2;MV.zoomed=true;MV.x=r.cx-W/2/1.2;MV.y=r.cy-H/2/1.2;clampView();zoomTo(MW/2,MH/2,W/MW,1.2);
 }
 // ---------- economy: pay, armory, treasury ----------
@@ -1925,23 +1938,49 @@ function payout(b,reg,win,st){
   if(!win){const cut=-Math.round(sub*.5);add(b.kind==='attack'?'Retreat: half pay':'Defeat: half pay',cut);sub+=cut}
   return{total:sub,html:rows.map(([t,v])=>`<div class="payRow"><span>${t}</span><b>${v<0?'−'+fmtCr(-v):'+'+fmtCr(v)}</b></div>`).join('')}}
 let shopCat='gun';
+const TIERC=['#8d99ad','#d0905a','#dbe4f0','#ffc93c'];
+function upIcon(u,L){const cat=u[0],id=u[1],mx=u[5],t=Math.min(3,Math.floor(L*4/mx)),c=TIERC[t],k='#1b2438';
+  const st=`fill="${c}" stroke="${k}" stroke-width="1.6" stroke-linejoin="round"`;let g='';
+  if(cat==='gun'){g=[`<path ${st} d="M12 18h20v6H21l-2 10h-6l2-10h-3z"/>`,
+     `<path ${st} d="M6 19h28v3h6v3h-6v3H22l-2 9h-5l1-9h-4l-1 5H6z"/><rect ${st} x="25" y="27" width="4" height="9"/>`,
+     `<path ${st} d="M3 22l8-4h25v2h9v3h-9v3H25l-2 9h-5l1-9h-6l-10 4z"/><rect ${st} x="17" y="13" width="13" height="4" rx="1.5"/><rect ${st} x="27" y="26" width="4" height="8"/>`,
+     `<rect ${st} x="4" y="16" width="17" height="16" rx="4"/><rect ${st} x="21" y="16" width="23" height="4"/><rect ${st} x="21" y="22" width="23" height="4"/><rect ${st} x="21" y="28" width="23" height="4"/><rect ${st} x="33" y="14" width="4" height="20" rx="1"/><path ${st} d="M8 32l-2 8h6l2-8z"/>`][t]}
+  else if(cat==='can'){g=[`<rect ${st} x="17" y="8" width="9" height="24" rx="2" transform="rotate(35 21 20)"/><rect ${st} x="8" y="34" width="30" height="5" rx="2"/>`,
+     `<rect ${st} x="16" y="17" width="27" height="6" rx="2"/><path ${st} d="M10 14h10v14H10z"/><circle ${st} cx="15" cy="32" r="8"/><circle fill="${k}" cx="15" cy="32" r="2"/>`,
+     `<rect ${st} x="4" y="24" width="30" height="13" rx="4"/><circle ${st} cx="18" cy="24" r="8"/><rect ${st} x="24" y="20" width="21" height="6" rx="2"/>`,
+     `<rect ${st} x="2" y="25" width="34" height="14" rx="4"/><rect ${st} x="9" y="15" width="18" height="13" rx="5"/><rect ${st} x="25" y="15" width="21" height="5" rx="2"/><rect ${st} x="25" y="22" width="21" height="5" rx="2"/>`][t]}
+  else if(cat==='mis'){const n=id==='msalvo'?Math.min(4,L+1):[1,1,2,3][t],h=Math.min(9,26/n);for(let i=0;i<n;i++){const y=24+(i-(n-1)/2)*h*1.15;
+     g+=`<path ${st} d="M8 ${y-h/2}h24l10 ${h/2}-10 ${h/2}H8l-4 ${h*.35}V${y-h*.85}z"/>`}}
+  else if(cat==='arm'){g=`<path ${st} d="M24 5l15 5v11c0 10-7 16-15 21-8-5-15-11-15-21V10z"/>`+(t>=1?`<path fill="none" stroke="${k}" stroke-width="1.4" d="M24 11l10 3.5v7c0 7-5 11-10 14.5-5-3.5-10-7.5-10-14.5v-7z"/>`:'')+(t>=2?`<path fill="${k}" d="M24 17v14M17 24h14" stroke="${k}" stroke-width="2"/>`:'')+(t>=3?`<circle fill="#fff" cx="15" cy="13" r="1.6"/><circle fill="#fff" cx="33" cy="13" r="1.6"/>`:'')}
+  else if(cat==='sq'){const n=id==='sres'?Math.max(1,L):id==='spost'?1+L:1;
+     if(id==='spost'){for(let i=0;i<n;i++)g+=`<rect ${st} x="${8+i*11}" y="${30-(i%2)*7}" width="12" height="7" rx="3.5"/>`;g+=`<circle ${st} cx="24" cy="16" r="6"/>`}
+     else if(n>1){for(let i=0;i<Math.min(4,n);i++){const x=10+i*9;g+=`<path ${st} d="M${x-6} 30c0-6 3-9 6-9s6 3 6 9z"/><rect ${st} x="${x-7}" y="30" width="14" height="3" rx="1"/>`}}
+     else{g=`<path ${st} d="M10 28c0-9 6-15 14-15s14 6 14 15z"/><rect ${st} x="6" y="28" width="36" height="4" rx="2"/>`+(t>=1?`<path fill="none" stroke="${k}" stroke-width="1.6" d="M12 32c2 6 6 8 12 8s10-2 12-8"/>`:'')+(t>=2?`<rect fill="${k}" x="15" y="22" width="18" height="4" rx="2"/>`:'')+(t>=3?`<path fill="#fff" stroke="${k}" d="M24 14l1.6 3.4 3.6.4-2.7 2.4.8 3.6-3.3-1.9-3.3 1.9.8-3.6-2.7-2.4 3.6-.4z"/>`:'')}}
+  else if(id==='ap'){const n=1+Math.min(2,t);for(let i=0;i<n;i++){const x=24+(i-(n-1)/2)*11;g+=`<path ${st} d="M${x-4} 40V22c0-${6+t*2} 4-${12+t*2} 4-${12+t*2}s4 ${6+t*2} 4 ${12+t*2}v18z"/><rect fill="${k}" x="${x-4}" y="33" width="8" height="2"/>`}}
+  else{const n=2+t*2;for(let i=0;i<n;i++)g+=`<ellipse ${st} cx="${24+(i%2?3:-3)}" cy="${38-i*4}" rx="12" ry="4"/>`;g+=`<text x="24" y="${38-(n-1)*4+3}" font-size="7" font-weight="900" text-anchor="middle" fill="${k}">$</text>`}
+  const B={gdmg:'up',grate:'fast',grng:'aim',gacc:'aim',gcool:'snow',gturn:'rot',cdmg:'up',csplash:'star',ccd:'clock',mdmg:'up',mcd:'clock',msalvo:'plus',hp:'up',guard:'down',regen:'plus',shp:'plus',sdmg:'up'}[id];
+  const bp={up:'M38 32.5l4.5 5h-3v4.5h-3v-4.5h-3z',down:'M38 43.5l4.5-5h-3V34h-3v4.5h-3z',plus:'M38 33v10M33 38h10',fast:'M33.5 34l4 4-4 4M38.5 34l4 4-4 4',aim:'M38 32.5v11M32.5 38h11M38 34.5a3.5 3.5 0 1 0 .01 0',
+    snow:'M38 32.5v11M33.2 35.2l9.6 5.6M33.2 40.8l9.6-5.6',rot:'M42 38a4 4 0 1 1-1.2-2.9M42 33.5v2.5h-2.5',clock:'M38 33.5a4.5 4.5 0 1 0 .01 0M38 35.5v3l2 1.5',star:'M38 32.5l1.6 3.6 3.9-.6-2.4 3 2.4 3-3.9-.6-1.6 3.6-1.6-3.6-3.9.6 2.4-3-2.4-3 3.9.6z'}[B];
+  const badge=B?`<circle cx="38" cy="38" r="8" fill="${k}" stroke="${c}" stroke-width="1.5"/><path d="${bp}" fill="${B==='up'||B==='down'||B==='star'?'#fff':'none'}" stroke="#fff" stroke-width="${B==='up'||B==='down'||B==='star'?0:1.8}" stroke-linecap="round" stroke-linejoin="round"/>`:'';
+  return `<svg class="upIco t${t}" viewBox="0 0 48 48" aria-hidden="true">${g}${badge}</svg>`}
 function openShop(){if(mode!==3||!C.owner)return;C.paused=true;$('shopMenu').hidden=false;renderShop()}
 function closeShop(){$('shopMenu').hidden=true;C.paused=false;updHud3()}
 function renderShop(){
   $('shopMoney').textContent=fmtCr(C.money);
   $('shopTabs').innerHTML=UPCAT.map(([k,n])=>`<button type="button" data-cat="${k}" class="${k===shopCat?'on':''}">${n}</button>`).join('');
   $('upList').innerHTML=UPG.filter(u=>u[0]===shopCat).map(u=>{const L=lvlOf(u[1]),mx=u[5],pr=upPrice(u,L),full=L>=mx;
-    return `<div class="up"><h3>${u[2]} <span class="lbl">Lv ${L}/${mx}</span></h3><p>${u[3]} · now ${L?upFx(u,L):'base'}${full?'':' → '+upFx(u,L+1)}</p>
+    return `<div class="up">${upIcon(u,L)}<h3>${u[2]} <span class="lbl">Lv ${L}/${mx}</span></h3><p>${u[3]} · now ${L?upFx(u,L):'base'}${full?'':' → '+upFx(u,L+1)}</p>
       <div class="pips">${Array.from({length:mx},(_,i)=>`<i class="${i<L?'on':''}"></i>`).join('')}</div>
       <button type="button" data-up="${u[1]}" ${full||C.money<pr?'disabled':''}>${full?'MAX':fmtCr(pr)}</button></div>`}).join('')}
 function buyUp(id){const u=UPI[id],L=lvlOf(id);if(L>=u[5])return;const pr=upPrice(u,L);if(C.money<pr)return;
   C.money-=pr;C.up[id]=L+1;saveCamp();beep(880,.08,'triangle',.05);setTimeout(()=>beep(1180,.1,'triangle',.05),70);renderShop()}
+const vaultCache=[];function vaultImg(l){if(!vaultCache[l]){const c=document.createElement('canvas');c.width=c.height=112;const g=c.getContext('2d'),o=ctx;ctx=g;try{ctx.setTransform(1,0,0,1,0,0);drawVault(56,60,l,1.7)}finally{ctx=o}vaultCache[l]=c.toDataURL()}return vaultCache[l]}
 function openBank(){if(mode!==3||!C.owner)return;C.paused=true;$('bankMenu').hidden=false;renderBank()}
 function closeBank(){$('bankMenu').hidden=true;C.paused=false;updHud3()}
 function renderBank(){const B=C.bank,cur=BANKS[B.lvl];
   $('bankMoney').textContent=fmtCr(C.money);
   $('bankWhere').innerHTML=`Your money is in a <b>${cur.name}</b> in <b>${REG[B.id].name}</b>. ${cur.loss>=1?'If that region falls, you lose it all.':`If that region falls, you lose ${Math.round(cur.loss*100)}%.`}`;
-  $('bankList').innerHTML=BANKS.map((k,i)=>`<div class="up"><h3>${k.name}</h3><p>${k.desc}</p><p></p>
+  $('bankList').innerHTML=BANKS.map((k,i)=>`<div class="up"><img class="upIco${i===B.lvl?' t3':''}" alt="" src="${vaultImg(i)}"><h3>${k.name}</h3><p>${k.desc}</p><p></p>
     <button type="button" data-bank="${i}" ${i<=B.lvl||C.money<k.cost?'disabled':''}>${i<B.lvl?'Built':i===B.lvl?'Current':fmtCr(k.cost)}</button></div>`).join('');
   $('bankMove').textContent=`Move treasury · ${fmtCr(moveCost())}`;$('bankMove').disabled=C.money<moveCost()}
 function buyBank(i){if(i<=C.bank.lvl)return;let cost=0;for(let j=C.bank.lvl+1;j<=i;j++)cost=BANKS[i].cost;if(C.money<cost)return;
@@ -1962,14 +2001,15 @@ function updHud3(){
   const a=arsenalText();$('cGun').textContent=a.gun;$('cExtra').textContent=a.extra;$('cFort').textContent=`${a.fort} · Assault vehicle Mk ${a.mk}`;
   const ph=C.phase,tb=$('cTimer');let title='',sub='',showT=false,red=false;
   if(ph==='idle'){title='Scouting the front';sub='Watching for enemy movement'}
+  if(ph==='plan'){title='Plan your next move';sub='Visit the armory and treasury. Press Ready when you are set.'}
   if(ph==='enemy'){title=`Enemy attacks ${REG[C.target].name}!`;sub=`Defend in ${Math.ceil(C.t)}`;showT=true;red=true}
   if(ph==='choose'){title='Your move: attack!';sub=`Tap a glowing region · ${Math.ceil(C.t)}s`;showT=true}
   if(ph==='launch'){title=`Attacking ${REG[C.target].name}`;sub=THEMES[REG[C.target].terrain].label}
   if(ph==='won'){title='All 100 regions are ours';sub='Total victory'}
-  if(C.sel!=null&&(ph==='idle'||ph==='choose')&&!(ph==='choose'&&C.choice.includes(C.sel))){const r=REG[C.sel];sub=`${r.name} · ${THEMES[r.terrain].label} · ${C.owner[r.id]?'ours':'enemy'} · ${'★'.repeat(1+Math.round(r.diff*4))}`}
+  if(C.sel!=null&&(ph==='idle'||ph==='choose'||ph==='plan')&&!(ph==='choose'&&C.choice.includes(C.sel))){const r=REG[C.sel];sub=`${r.name} · ${THEMES[r.terrain].label} · ${C.owner[r.id]?'ours':'enemy'} · ${'★'.repeat(1+Math.round(r.diff*4))}`}
   $('cTitle').textContent=title;$('cSub').textContent=sub;tb.hidden=!showT;tb.classList.toggle('red',red);
   if(showT)tb.firstElementChild.style.width=Math.max(0,C.t/C.T*100)+'%';
-  $('cAct').hidden=ph!=='enemy';
+  $('cAct').hidden=!(ph==='enemy'||ph==='plan')||C.moveBank;$('cAct').textContent=ph==='plan'?'Ready':'Defend now';
   $('cZoom').textContent=MV.zoomed?'Whole map':'Zoom in';
   const rk=rankOf(C.earned);$('cRank').textContent=RANKS[rk][1]+(RANKS[rk+1]?` · next at ${fmtCr(RANKS[rk+1][0])} earned`:'');
   $('cMoney').textContent=fmtCr(C.money);$('cBankTxt').textContent=`${BANKS[C.bank.lvl].name} in ${REG[C.bank.id]?REG[C.bank.id].name:'—'}`;
@@ -2007,13 +2047,33 @@ function draw3(){
     if(C.owner[r.id]){ctx.strokeStyle='#fff';ctx.lineWidth=2;if(C.built[r.id]&&r.id!==START){rr(x-7,y-7,14,14,3,'#2f8cff',true);ctx.fillStyle='#fff';ctx.fillRect(x-3,y-3,6,6)}else circ(x,y,r.id===START?9:6.5,r.id===START?'#ffc93c':'#2f8cff',true)}
     else{ctx.strokeStyle='rgba(60,10,25,.8)';ctx.lineWidth=1.5;circ(x,y,4.5,r.diff<.34?'#ff9aaa':r.diff<.67?'#ff4d5e':'#b0102a',true)}
     terrainIcon(r.terrain,x,y-15,MV.zoomed?1.25:1);
-    if(r.id===C.bank.id&&C.owner[r.id]){const bx=x+11,by=y-9;ctx.globalCompositeOperation='lighter';drawGlow('#ffc93c',bx,by,16+pulse*4,.5);ctx.globalCompositeOperation='source-over';
-      ctx.strokeStyle='rgba(60,40,0,.9)';ctx.lineWidth=1.5;rr(bx-7,by-6,14,12,3,C.bank.lvl===2?'#ffe08a':C.bank.lvl===1?'#ffc93c':'#d99a2b',true);ctx.fillStyle='#3a2600';ctx.font='800 9px Rubik,system-ui';ctx.textAlign='center';ctx.fillText('$',bx,by+3.5)}
+    if(r.id===C.bank.id&&C.owner[r.id]){const bs=MV.zoomed?.8:.62,bx=x+22*bs/.5,by=y-6;ctx.globalCompositeOperation='lighter';drawGlow('#ffc93c',bx,by,30*bs/.5+pulse*5,.55);ctx.globalCompositeOperation='source-over';drawVault(bx,by,C.bank.lvl,bs)}
     if(C.moveBank&&C.owner[r.id]){ctx.strokeStyle=`rgba(255,215,90,${.5+.5*pulse})`;ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y,12+pulse*2,0,7);ctx.stroke()}
     if(C.sel===r.id){ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.setLineDash([4,4]);ctx.beginPath();ctx.arc(x,y,14,0,7);ctx.stroke();ctx.setLineDash([])}
     if(showNames||C.sel===r.id||(C.phase!=='idle'&&r.id===C.target)){ctx.lineJoin='round';ctx.font='700 11px Rubik,system-ui';ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='rgba(10,20,40,.75)';ctx.strokeText(r.name,x,y+20);ctx.fillStyle='#fff';ctx.fillText(r.name,x,y+20)}
   }
 }
+function drawVault(x,y,lvl,s,hit){ctx.save();ctx.translate(x,y);ctx.scale(s,s);ctx.lineJoin='round';
+  const ink='#1b2438';ctx.lineWidth=2;ctx.strokeStyle=ink;
+  ctx.fillStyle='rgba(10,30,20,.3)';ctx.beginPath();ctx.ellipse(3,20,26,7,0,0,7);ctx.fill();
+  if(lvl===0){ // field safe: steel strongbox
+    rr(-18,-12,36,30,4,hit?'#fff':'#6f7f96',true);rr(-18,-12,36,8,4,'#56657c',true);
+    ctx.fillStyle='#ffc93c';ctx.beginPath();ctx.arc(4,6,6,0,7);ctx.fill();ctx.stroke();ctx.fillStyle=ink;ctx.fillRect(3,1,2,5);
+    rr(-14,2,7,3,1.5,'#cfd8e6',true);for(const [a,b] of [[-15,14],[15,14],[-15,-1],[15,-1]]){ctx.fillStyle='#cfd8e6';ctx.beginPath();ctx.arc(a,b,1.4,0,7);ctx.fill()}
+  }else if(lvl===1){ // bank: columns and pediment
+    rr(-24,12,48,7,2,'#cbbf9f',true);rr(-21,-6,42,19,1,hit?'#fff':'#efe6cc',true);
+    ctx.fillStyle='#d8cba6';for(let i=0;i<4;i++){ctx.fillRect(-17+i*10,-4,5,15);ctx.strokeRect(-17+i*10,-4,5,15)}
+    ctx.fillStyle='#ffc93c';ctx.beginPath();ctx.moveTo(-26,-6);ctx.lineTo(0,-22);ctx.lineTo(26,-6);ctx.closePath();ctx.fill();ctx.stroke();
+    ctx.fillStyle=ink;ctx.font='900 11px Rubik,system-ui';ctx.textAlign='center';ctx.fillText('$',0,-9);
+  }else{ // armored vault: steel block with round door
+    rr(-24,-18,48,38,6,hit?'#fff':'#7d8fa8',true);rr(-24,-18,48,7,6,'#5f7088',true);
+    ctx.fillStyle='#4d5d75';ctx.beginPath();ctx.arc(0,3,14,0,7);ctx.fill();ctx.stroke();
+    ctx.fillStyle='#b9c6d8';ctx.beginPath();ctx.arc(0,3,10.5,0,7);ctx.fill();ctx.stroke();
+    ctx.strokeStyle='#ffc93c';ctx.lineWidth=2.6;for(let i=0;i<3;i++){const a=i*Math.PI/3;ctx.beginPath();ctx.moveTo(Math.cos(a)*8,3+Math.sin(a)*8);ctx.lineTo(-Math.cos(a)*8,3-Math.sin(a)*8);ctx.stroke()}
+    ctx.fillStyle='#ffc93c';ctx.strokeStyle=ink;ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(0,3,3.2,0,7);ctx.fill();ctx.stroke();
+    ctx.fillStyle='#cfd8e6';for(const [a,b] of [[-20,-6],[20,-6],[-20,16],[20,16]]){ctx.beginPath();ctx.arc(a,b,1.6,0,7);ctx.fill()}
+  }
+  ctx.restore()}
 function terrainIcon(t,x,y,s){ctx.save();ctx.translate(x,y);ctx.scale(s,s);ctx.lineJoin='round';ctx.lineCap='round';
   const ink=(f)=>{ctx.strokeStyle='rgba(10,20,40,.55)';ctx.lineWidth=3.2;f();ctx.stroke();ctx.strokeStyle='#fff';ctx.lineWidth=1.5;f();ctx.stroke()};
   const P={
@@ -2036,7 +2096,7 @@ cv.addEventListener('pointerup',ev=>{if(mode!==3||!MV.drag)return;const d=MV.dra
 cv.addEventListener('pointercancel',()=>{MV.drag=null});
 cv.addEventListener('wheel',ev=>{if(mode!==3)return;ev.preventDefault();if((ev.deltaY<0)!==MV.zoomed)toggleZoom()},{passive:false});
 $('cZoom').addEventListener('click',toggleZoom);
-$('cAct').addEventListener('click',()=>{if(C.phase==='enemy')startBattle('defend',C.target)});
+$('cAct').addEventListener('click',()=>{if(C.phase==='enemy')startBattle('defend',C.target);else if(C.phase==='plan'){beep(660,.1,'triangle',.05);setPhase('idle',.6)}});
 $('ceBack').addEventListener('click',backToMap);
 $('shopBtn').addEventListener('click',openShop);$('shopClose').addEventListener('click',closeShop);
 $('bankBtn').addEventListener('click',openBank);$('bankClose').addEventListener('click',closeBank);
