@@ -90,6 +90,9 @@ button.ghost{font:700 clamp(12px,1.6vw,15px) var(--ui);letter-spacing:.06em;back
 #cNext{font-size:.8em;color:var(--gold)}#cNextBar{height:.45em}#cNextBar>i{background:linear-gradient(90deg,#ffc93c,#ff8a3d)}
 #pause,#fsBtn{position:absolute;z-index:3;right:1.4%;top:2.4%;pointer-events:auto;width:3.2em;height:3.2em;border-radius:50%;border:1px solid var(--glass-line);background:var(--glass);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:grid;place-items:center;cursor:pointer;color:var(--ink);padding:0;font-size:clamp(8px,1.4vw,15px)}
 #fsBtn{top:calc(2.4% + 3.9em)}
+#exitBtn{position:absolute;z-index:3;right:1.4%;top:calc(2.4% + 7.8em);pointer-events:auto;width:3.2em;height:3.2em;border-radius:50%;border:1px solid var(--glass-line);background:var(--glass);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:grid;place-items:center;cursor:pointer;color:var(--ink);padding:0;font-size:clamp(8px,1.4vw,15px)}
+#fsBtn[hidden]+#exitBtn{top:calc(2.4% + 3.9em)}#exitBtn svg{width:46%;height:46%}
+@media (max-height:460px){#exitBtn{font-size:clamp(7px,1.15vw,12px)}}
 #pause svg,#fsBtn svg{width:42%;height:42%}
 .lbl{font-size:.75em;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
 .rowb{display:flex;justify-content:space-between;align-items:baseline;gap:.5em}
@@ -179,6 +182,7 @@ button:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
   </div>
   <button id="pause" type="button" aria-label="Pause"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="4" width="5" height="16" rx="1.5"/><rect x="14" y="4" width="5" height="16" rx="1.5"/></svg></button>
   <button id="fsBtn" type="button" aria-label="Full screen" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path id="fsIco" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+  <button id="exitBtn" type="button" aria-label="Exit to menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10 4H5v16h5"/><path d="M14 8l4 4-4 4M18 12H9"/></svg></button>
   <div class="hud" id="hud2" hidden>
     <div class="topbar" id="top2">
     <div class="chip" id="vl">
@@ -292,6 +296,9 @@ button:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
       <div class="btns"><button class="ghost" id="bankMove" type="button">Move treasury</button></div>
       <p class="hint">All pay goes into the treasury. If its region falls, the enemy loots it. The enemy hunts for it, and sometimes raids it deep behind the front.</p>
     </div>
+  </div>
+  <div class="menu" id="exitMenu" hidden>
+    <div class="card"><h1>Exit?</h1><p id="exitInfo"></p><div class="btns"><button class="go" id="exitStay" type="button">Keep playing</button><button class="ghost" id="exitGo" type="button">Exit to menu</button></div></div>
   </div>
   <div class="menu" id="genMsg" hidden><div class="card"><h1>Drawing the map</h1><p>Surveying 100 regions…</p></div></div>
   <div class="menu" id="failMenu" hidden>
@@ -521,7 +528,7 @@ function reset(cfg){
      ammo:GUNS[0].mag,reloading:0,wave:1,waveLeft:0,spawnT:1.5,waveBreak:0,cool:0,canT:0,misT:0,airT:0,canAng:0,misAng:0,canKick:0,
      enemies:[],bullets:[],shells:[],missiles:[],bombs:[],planes:[],eshots:[],parts:[],marks:[],blasts:[],texts:[],
      aim:{x:W*.55,y:BK.y},firing:false,running:true,paused:false,shake:0,recoil:0,outT:0,flash:0,hurt:0,muzzle:0};
-  FX=S;if(cfg)applyArsenal(cfg.stage,cfg.fortBonus);else BK.r=FORTS[0].r;startWave(cfg?cfg.wave0:1);updHud();
+  FX=S;if(cfg)applyArsenal(cfg.stage,cfg.fortBonus);else BK.r=FORTS[0].r;if(cfg){S.totalE=0;for(let n=cfg.wave0;n<cfg.wave0+cfg.waves;n++)S.totalE+=campWave(n)}startWave(cfg?cfg.wave0:1);updHud();
 }
 const gun=()=>S.gunX||GUNS[S.gun];
 const CAN=()=>S.canX||CANNON[S.cannon],MIS=()=>S.misX||MISSILE[S.missile];
@@ -531,10 +538,11 @@ function applyArsenal(st,bonus){
   S.ammo=GUNS[S.gun].mag;S.fort=Math.min(FORTS.length-1,FORTS.reduce((a,f,i)=>f.stage<=st?i:a,0)+(bonus||0));const F=FORTS[S.fort];S.maxHp=S.hp=F.hp;BK.r=F.r;S.shield=F.shield||0;
   if(S.camp&&C&&C.up)applyUpgradesDefense();
 }
+const campWave=n=>Math.max(5,Math.round(Math.min(34,7+n*.9+S.stage*.6)*(S.camp.ease||1)))+(n%10===0&&reach()>=TYPES.boss.stop+10?1:0);
 function startWave(n){
   S.wave=n;
-  S.waveLeft=S.camp?Math.max(5,Math.round(Math.min(34,7+n*.9+S.stage*.6)*(S.camp.ease||1))):Math.min(170,Math.round((6+n*2.2)*(1+S.stage*.08)));
-  S.spawnT=1.2;
+  S.waveLeft=S.camp?campWave(n)-(n%10===0&&reach()>=TYPES.boss.stop+10?1:0):Math.min(170,Math.round((6+n*2.2)*(1+S.stage*.08)));
+  S.spawnT=S.camp&&n>S.camp.wave0?.3:1.2;
   if(S.camp){const i=n-S.camp.wave0+1;if(n%10===0&&reach()>=TYPES.boss.stop+10)S.boss=true;toast(`Wave ${i} of ${S.camp.waves}`,n%10===0?'Boss tank incoming':`${S.waveLeft} enemies incoming`)}
   else if(n%10===0){S.boss=true;toast(`Wave ${n}`,'Boss tank incoming')}
   else toast(`Wave ${n}`,`${S.waveLeft} enemies incoming`);
@@ -692,7 +700,7 @@ function updHud(){
   $('stageTxt').textContent=`Stage ${S.stage+1} of ${STAGES.length}`;
   $('next').textContent=nx?`Next: ${stageName(nx)} at ${nx.at}`:'All stages unlocked';
   $('upbar').firstElementChild.style.width=nx?((S.score-cur.at)/(nx.at-cur.at)*100)+'%':'100%';
-  if(S.camp){const c=S.camp,i=S.wave-c.wave0+1;$('wave').textContent=`WAVE ${i} OF ${c.waves}`;$('stageTxt').textContent=c.name;$('next').textContent='Hold the '+c.label.toLowerCase();$('upbar').firstElementChild.style.width=((i-1)/c.waves*100)+'%'}
+  if(S.camp){const c=S.camp,i=S.wave-c.wave0+1;let rem=S.waveLeft+S.enemies.length+(S.boss?1:0);for(let n=S.wave+1;n<c.wave0+c.waves;n++)rem+=campWave(n);$('wave').textContent=`ENEMIES LEFT ${rem}`;$('stageTxt').textContent=`${c.name} · wave ${i} of ${c.waves}`;$('next').textContent='Hold the '+c.label.toLowerCase();$('upbar').firstElementChild.style.width=Math.max(0,Math.min(100,rem/Math.max(1,S.totalE)*100))+'%'}
   $('weapon').textContent=w.name;
   const rl=S.reloading>0;
   $('ammo').textContent=rl?'Reloading':`${S.ammo} / ${w.mag}`;
@@ -715,7 +723,8 @@ let hudT=0;
 function update(dt){
   if(S.boss){S.boss=false;S.enemies.push(makeEnemy('boss',W+50,BK.y+rnd(-80,80)))}
   if(S.waveLeft>0){S.spawnT-=dt;if(S.spawnT<=0&&S.enemies.length<75){spawn();S.waveLeft--;S.spawnT=Math.max(.12,(1.6-S.wave*.03)/(1+S.stage*.08))*rnd(.6,1.4)}}
-  else if(!S.enemies.length&&!S.boss){S.waveBreak+=dt;if(S.waveBreak>2.2){S.waveBreak=0;if(S.camp&&S.wave>=S.camp.wave0+S.camp.waves-1){S.running=false;S.firing=false;campaignBattleEnd(true,`${S.kills} kills · bunker at ${Math.round(S.hp/S.maxHp*100)}%`,{bounty:S.score*5,combo:0,acc:S.shots?S.hits/S.shots:0});return}S.hp=Math.min(S.maxHp,S.hp+S.maxHp*.15);startWave(S.wave+1)}}
+  else if(S.camp&&S.wave<S.camp.wave0+S.camp.waves-1&&S.enemies.length<=3&&!S.boss){S.hp=Math.min(S.maxHp,S.hp+S.maxHp*.08);startWave(S.wave+1)}
+  else if(!S.enemies.length&&!S.boss){S.waveBreak+=dt;if(S.waveBreak>(S.camp?.6:2.2)){S.waveBreak=0;if(S.camp&&S.wave>=S.camp.wave0+S.camp.waves-1){S.running=false;S.firing=false;campaignBattleEnd(true,`${S.kills} kills · bunker at ${Math.round(S.hp/S.maxHp*100)}%`,{bounty:S.score*5,combo:0,acc:S.shots?S.hits/S.shots:0});return}S.hp=Math.min(S.maxHp,S.hp+S.maxHp*.15);startWave(S.wave+1)}}
   if(S.reloading>0){S.reloading-=dt;if(S.reloading<=0){S.reloading=0;S.ammo=gun().mag;beep(760,.06,'triangle',.04)}}
   S.cool-=dt;
   if(S.firing&&S.cool<=0){fire();S.cool=1/gun().rate}
@@ -1035,11 +1044,16 @@ tap('reloadBtn',startReload);tap('canBtn',fireCannon);tap('misBtn',fireMissiles)
 
 function togglePause(force){const G=mode===2?A:mode===3?C:S;if(!G.running||(mode===2&&A.result))return;G.paused=force??!G.paused;G.firing=false;$('pauseMenu').hidden=!G.paused}
 $('pause').onclick=()=>togglePause();
+function openExit(){if(mode===0)return;const G=mode===2?A:mode===3?C:S;if(G.running&&!(mode===2&&A.result)){G.paused=true;G.firing=false}$('pauseMenu').hidden=true;
+  $('exitInfo').textContent=mode===3?'Your campaign is saved. You can continue later.':(mode===1&&S.camp)||(mode===2&&A.camp)?'This battle will not count. Your campaign stays saved from before the battle.':'Progress in this run will be lost.';$('exitMenu').hidden=false}
+$('exitBtn').onclick=openExit;
+$('exitStay').onclick=()=>{$('exitMenu').hidden=true;const G=mode===2?A:mode===3?C:S;if(G.running)G.paused=false};
+$('exitGo').onclick=()=>{$('exitMenu').hidden=true;if(C.battle)C.battle=null;$('shopMenu').hidden=true;$('bankMenu').hidden=true;goMenu()};
 $('resumeBtn').onclick=()=>togglePause(false);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)togglePause(true)});
 
 function begin(){initAudio();autoFull();setWeather('clear');if(curT1!==THEMES.grass||curL1.kind!=='road')buildGround(THEMES.grass,{kind:'road'});mode=1;A.running=false;C.running=false;$('hud3').hidden=true;$('hud1').hidden=false;$('hud2').hidden=true;for(const id of['startMenu','overMenu','pauseMenu'])$(id).hidden=true;toastQ=[];reset()}
-function goMenu(){mode=0;A.running=false;C.running=false;$('hud3').hidden=true;$('campEnd').hidden=true;$('genMsg').hidden=true;setWeather('clear');if(curT1!==THEMES.grass||curL1.kind!=='road')buildGround(THEMES.grass,{kind:'road'});campaignCard();reset();S.running=false;S.waveLeft=0;FX=S;toastQ=[];$('toast').classList.remove('show');
+function goMenu(){mode=0;$('exitBtn').hidden=true;A.running=false;C.running=false;$('hud3').hidden=true;$('campEnd').hidden=true;$('genMsg').hidden=true;setWeather('clear');if(curT1!==THEMES.grass||curL1.kind!=='road')buildGround(THEMES.grass,{kind:'road'});campaignCard();reset();S.running=false;S.waveLeft=0;FX=S;toastQ=[];$('toast').classList.remove('show');
   $('hud1').hidden=false;$('hud2').hidden=true;for(const id of['overMenu','pauseMenu','winMenu','failMenu'])$(id).hidden=true;$('startMenu').hidden=false;showBest();showStars()}
 const fsOK=!!(document.fullscreenEnabled||document.webkitFullscreenEnabled);
 const isFull=()=>!!(document.fullscreenElement||document.webkitFullscreenElement);
@@ -1096,7 +1110,8 @@ const MAP2={
 };
 let A={running:false,paused:false};
 // assault balance by region tier (0 easy, 1 medium, 2 hard)
-const TUNE={hp:[1.0,1.1,1.25],dmg:[.75,.8,.86],budget:[1e9,1e9,1e9],cap:[11,12,12],flank:[.25,.35,.45],behind:[.04,.08,.12],gap:[2.9,2.7,2.55],allyCost:3,reserve:6,maxPosts:8,turn:3.5,near:7,build:24};
+const ROUTE={link:[700,650,600],raid:[6.5,5.5,5],size:[7,7,8]};
+const TUNE={hp:[1.0,1.1,1.25],dmg:[.75,.8,.86],budget:[1e9,1e9,1e9],cap:[11,12,12],flank:[.25,.35,.45],behind:[.04,.08,.12],gap:[2.9,2.7,2.55],allyCost:3,reserve:6,maxPosts:8,turn:3.5,near:7,build:40};
 const keys={};
 const ground2=document.createElement("canvas");var G2S=0;
 const roadY=(x,ph=0)=>270+Math.sin(x/380+ph)*55+Math.sin(x/150+ph*2)*8;
@@ -1162,14 +1177,15 @@ function startAssault(cfg){
     pickups:M.repairs.map(([x,y])=>({x,y})),
     enemies:M.enemies.map(([k,x,y])=>mk(k,x,y)),
     bullets:[],eshots:[],shells:[],missiles:[],parts:[],marks:[],blasts:[],texts:[],chain:[],endT:0,result:null};
-  A.U=cfg?{turn:upg('gturn'),spread:upg('gacc'),regen:upg('regen'),guard:upg('guard'),ap:upg('ap'),shp:upg('shp'),sdmg:upg('sdmg')}:{};A.maxPosts=(A.maxPosts||TUNE.maxPosts)+(cfg?upg('spost'):0);A.reserve+=cfg?upg('sres'):0;
+  A.U=cfg?{pwall:upg('pwall'),turn:upg('gturn'),spread:upg('gacc'),regen:upg('regen'),guard:upg('guard'),ap:upg('ap'),shp:upg('shp'),sdmg:upg('sdmg')}:{};A.maxPosts=(A.maxPosts||TUNE.maxPosts)+(cfg?upg('spost'):0);A.reserve+=cfg?upg('sres'):0;
+  A.base={x:130,y:A.p.y};A.ruins=[];A.route=null;A.raidT=cfg?rnd(8,12):1e9;
   A.shots=0;A.hits=0;A.combo=0;A.lastKill=-9;A.comboCr=0;
   A.mk=mk;A.hpMulT=cfg?TUNE.hp[A.tier]:1;for(const e of A.enemies){e.hp*=A.hpMulT;e.max=e.hp}mk.mul=A.hpMulT;FX=A;setWeather(cfg?cfg.weather:'clear');
-  $('hud1').hidden=true;$('hud2').hidden=false;
+  $('hud1').hidden=true;$('hud2').hidden=false;$('exitBtn').hidden=false;
   for(const id of['startMenu','overMenu','winMenu','failMenu','pauseMenu','campEnd'])$(id).hidden=true;
   toastQ=[];toast(cfg?'Attack '+cfg.name:'Operation Iron Fist',cfg?`${T.label} · ${LAYOUT2[M.layout]||'Open ground'} · ${WXNAME[cfg.weather]}`:'Enemy territory ahead');
   toast('Push forward','Clear the outposts, then build a forward bunker at the site');
-  toast(['Light resistance','Heavy resistance','Fierce resistance'][A.tier]+' · endless enemy from all sides',`Press POST to dig in a squad (${(A.maxPosts||TUNE.maxPosts)} posts) · 3 kills = 1 soldier`);
+  toast(['Light resistance','Heavy resistance','Fierce resistance'][A.tier]+' · endless enemy, random raids',cfg?`Chain squad posts every ${ROUTE.link[A.tier]}m from the supply base to the site · ${A.maxPosts} posts`:`Press POST to dig in a squad · 3 kills = 1 soldier`);
   toast(isTouch?'Right thumb drives':'WASD to drive',isTouch?'Gun fires by itself · cannon and missiles on the left':'Mouse to aim · hold to fire · Q cannon · E missiles');
   updHud2();
 }
@@ -1219,7 +1235,7 @@ function kill2(t){
     if(t.kind==='hq'){cr=200;A.flash=.8;for(let i=0;i<7;i++)A.chain.push({t:i*.25,x:t.x+rnd(-50,50),y:t.y+rnd(-50,50)});A.result='win';A.endT=2.6;toast('HQ destroyed','Outpost cleared')}
     if(t.kind!=='hq'&&!hqShielded())toast(A.site?'Outposts cleared':'HQ shield is down',A.site?'Drive into the build site':'Destroy the command HQ');
   }else{
-    A.kills++;cr=t.pts*5;A.allyPts+=1;
+    A.kills++;cr=t.pts*(A.camp?3:5);A.allyPts+=1;
     if(A.camp){A.combo=A.time-A.lastKill<2.2?A.combo+1:0;A.lastKill=A.time;const cb=Math.round(cr*Math.min(.5,A.combo*.05));if(cb){A.comboCr+=cb;cr+=cb}}
     if(t.r>=14){blast(t.x,t.y,t.r*2.2);debris(t.x,t.y,14);boom(.13,.5)}else{puff(t.x,t.y,PAL[t.k][0],8,'spark');beep(220,.05,'triangle',.03)}
   }
@@ -1231,7 +1247,7 @@ function kill2(t){
 
 function fire2(){
   A.shots++;const p=A.p,a=p.tur+rnd(-.06,.06)*(A.U.spread||1),sx=p.x+Math.cos(p.tur)*30-Math.sin(p.tur)*6,sy=p.y+Math.sin(p.tur)*30+Math.cos(p.tur)*6;
-  A.bullets.push({x:sx,y:sy,sx,sy,vx:Math.cos(a)*PV.mg.speed,vy:Math.sin(a)*PV.mg.speed,dmg:PV.mg.dmg,range:PV.mg.range,col:PV.mg.col||'#ffd84a',size:2.8});
+  A.bullets.push({own:true,x:sx,y:sy,sx,sy,vx:Math.cos(a)*PV.mg.speed,vy:Math.sin(a)*PV.mg.speed,dmg:PV.mg.dmg,range:PV.mg.range,col:PV.mg.col||'#ffd84a',size:2.8});
   A.heat+=PV.mg.heat;A.muzzle=.05;beep(560,.03,'square',.02);
   if(A.heat>=1){A.heat=1;A.over=2;beep(140,.3,'sawtooth',.04);A.texts.push({x:p.x,y:p.y-34,t:'OVERHEAT',life:1.2,big:true})}
 }
@@ -1261,18 +1277,28 @@ function missiles2(){
 }
 
 // ---------- friendly soldiers ----------
-const ALLY={rifle:{range:300,rate:1.6,dmg:3.2,col:'#bfe6ff',name:'Rifleman'},mg:{range:260,rate:6,dmg:1.4,col:'#9fd8ff',name:'Gunner'},rpg:{range:340,rate:.4,dmg:22,col:'#ffd27a',name:'Rocket'}};
+const ALLY={hmg:{range:330,rate:7,dmg:1.7,col:'#d8eeff',name:'Post MG'},mortar:{range:440,rate:.28,dmg:30,col:'#ffd27a',name:'Mortar'},rifle:{range:300,rate:1.6,dmg:3.2,col:'#bfe6ff',name:'Rifleman'},mg:{range:260,rate:6,dmg:1.4,col:'#9fd8ff',name:'Gunner'},rpg:{range:340,rate:.4,dmg:22,col:'#ffd27a',name:'Rocket'}};
 function placePost(){
   if(!A.running||A.paused||A.result)return;const p=A.p;
+  const near=A.posts.find(q=>dist(q.x,q.y,p.x,p.y)<120);
+  if(near){const sol=near.men.filter(m=>!m.emp).length,miss=4-sol;
+    if(miss<=0&&!postEmpMissing(near)){A.texts.push({x:p.x,y:p.y-34,t:'Post is at full strength',life:1});return}
+    if(miss>0&&A.reserve<1){A.texts.push({x:p.x,y:p.y-34,t:'No soldiers in reserve',life:1});return}
+    const n=Math.min(miss,A.reserve);A.reserve-=n;addMen(near,n);addEmplacements(near);for(const m of near.men)m.hp=m.max;
+    beep(520,.12,'triangle',.05);A.texts.push({x:p.x,y:p.y-40,t:'Post reinforced',life:1.2,big:true,col:'#4be38f'});updHud2();return}
   if(A.posts.length>=(A.maxPosts||TUNE.maxPosts)){A.texts.push({x:p.x,y:p.y-34,t:'No posts left',life:1});return}
   if(A.reserve<2){A.texts.push({x:p.x,y:p.y-34,t:'Need 2 soldiers',life:1});return}
-  if(A.posts.some(q=>dist(q.x,q.y,p.x,p.y)<120)){A.texts.push({x:p.x,y:p.y-34,t:'Too close to another post',life:1});return}
-  const n=Math.min(4,A.reserve),k=A.camp?A.camp.k:0,post={x:p.x,y:p.y,r:36,men:[]};A.reserve-=n;
-  for(let i=0;i<n;i++){const a=i/n*Math.PI*2+.4,type=['rifle','mg','rifle','rpg'][(A.allyN++)%4];
-    const sh=(36+k*.6)*(A.U.shp||1),al={x:p.x+Math.cos(a)*18,y:p.y+Math.sin(a)*18,r:9,hp:sh,max:sh,type,cd:rnd(.2,.8),ang:a,dug:true,post,step:0,hit:0,mul:(1+k*.02)*(A.U.sdmg||1)};post.men.push(al);A.allies.push(al)}
+  const n=Math.min(4,A.reserve),post={x:p.x,y:p.y,r:36,men:[],alarm:0};A.reserve-=n;addMen(post,n);addEmplacements(post);
   A.posts.push(post);debris(p.x,p.y,8);beep(420,.12,'triangle',.05);A.texts.push({x:p.x,y:p.y-40,t:'Squad post set',life:1.2,big:true,col:'#4be38f'});updHud2();
 }
-function hurtAlly(a,d){if(a.dead)return;a.hp-=d*.5;a.hit=.08;if(a.hp<=0){a.dead=true;puff(a.x,a.y,'#7fb8ff',8,'spark')}}
+function addMen(post,n){const k=A.camp?A.camp.k:0,have=post.men.filter(m=>!m.emp).length;
+  for(let i=0;i<n;i++){const a=(have+i)/4*Math.PI*2+.4,type=['rifle','mg','rifle','rpg'][(A.allyN++)%4];
+    const sh=(36+k*.6)*(A.U.shp||1),al={x:post.x+Math.cos(a)*20,y:post.y+Math.sin(a)*20,r:9,hp:sh,max:sh,type,cd:rnd(.2,.8),ang:a,dug:true,post,step:0,hit:0,mul:(1+k*.02)*(A.U.sdmg||1)};post.men.push(al);A.allies.push(al)}}
+const postEmpMissing=q=>A.camp&&((upg('phmg')>0&&!q.men.some(m=>m.type==='hmg'))||(upg('pmortar')>0&&!q.men.some(m=>m.type==='mortar')));
+function addEmplacements(post){if(!A.camp)return;const k=A.camp.k;
+  for(const [type,id,dx,dy] of [['hmg','phmg',-2,-4],['mortar','pmortar',2,6]]){const L=upg(id);if(L<1||post.men.some(m=>m.type===type))continue;
+    const hp=(70+k*1.2)*(A.U.shp||1),al={x:post.x+dx,y:post.y+dy,r:11,hp,max:hp,type,emp:true,cd:rnd(.2,.8),ang:0,dug:true,post,step:0,hit:0,mul:(1+k*.02)*(1+.15*(L-1))};post.men.push(al);A.allies.push(al)}}
+function hurtAlly(a,d){if(a.dead)return;a.hp-=d*.5*(A.U.pwall||1);if(a.post)a.post.alarm=3;a.hit=.08;if(a.hp<=0){a.dead=true;puff(a.x,a.y,'#7fb8ff',8,'spark')}}
 function updateAllies(dt){
   const list=A.allies.filter(a=>!a.dead);
   list.forEach(a=>{
@@ -1283,16 +1309,39 @@ function updateAllies(dt){
     a.cd-=dt;
     if(best){a.ang=Math.atan2(best.y-a.y,best.x-a.x);
       if(a.cd<=0&&!A.result){a.cd=1/T.rate*rnd(.85,1.15);const ox=a.x+Math.cos(a.ang)*12,oy=a.y+Math.sin(a.ang)*12;
-        if(a.type==='rpg')A.shells.push({sx:ox,sy:oy,tx:best.x,ty:best.y,t:0,dur:Math.max(.2,bd/420),dmg:T.dmg*a.mul,splash:34});
+        if(a.type==='rpg'||a.type==='mortar')A.shells.push({sx:ox,sy:oy,tx:best.x,ty:best.y,t:0,dur:Math.max(.2,bd/(a.type==='mortar'?300:420)),dmg:T.dmg*a.mul,splash:a.type==='mortar'?56:34});
         else{const g=a.ang+rnd(-.06,.06);A.bullets.push({x:ox,y:oy,sx:ox,sy:oy,vx:Math.cos(g)*820,vy:Math.sin(g)*820,dmg:T.dmg*a.mul,range:T.range,col:T.col,size:2})}}}
   });
-  A.allies=A.allies.filter(a=>!a.dead);for(const q of A.posts)q.men=q.men.filter(a=>!a.dead);
+  A.allies=A.allies.filter(a=>!a.dead);for(const q of A.posts){q.men=q.men.filter(a=>!a.dead);q.alarm=Math.max(0,(q.alarm||0)-dt)}
+  for(const q of A.posts)if(!q.men.length){A.ruins.push(q);smoke(q.x,q.y,6,20);A.texts.push({x:q.x,y:q.y-40,t:'POST LOST',life:1.6,big:true,col:'#ff4d5e'});if(A.site)toast('Squad post lost','The supply route may be cut');beep(160,.3,'sawtooth',.05)}
+  A.posts=A.posts.filter(q=>q.men.length);
 }
+function calcRoute(){const B=A.site;if(!B)return null;const L=ROUTE.link[A.tier];
+  const nodes=[{x:A.base.x,y:A.base.y,base:true},...A.posts.filter(q=>q.x<B.x-20).sort((a,b)=>a.x-b.x),{x:B.x,y:B.y,site:true}],links=[];
+  for(let i=0;i<nodes.length-1;i++){const a=nodes[i],b=nodes[i+1];links.push({a,b,ok:dist(a.x,a.y,b.x,b.y)<=L})}
+  const bad=links.filter(l=>!l.ok);return{nodes,links,ok:!bad.length,bad:bad.length,firstBad:bad[0]||null,L}}
+function enemyType(){const d=A.M.diff||0,I=A.intensity;
+  const pool=[['soldier',44],['gunner',18],['jeep',d>.05?12:0],['heavy',I>.4?8:0],['tank',d>.3&&I>.55?4:0],['heli',d>.4&&I>.45?5:0]].filter(q=>q[1]>0);
+  let t=rnd(0,pool.reduce((a,q)=>a+q[1],0)),k='soldier';for(const [kk,w] of pool){if((t-=w)<=0){k=kk;break}}return k}
+function raidType(){const T=A.tier,pool=[['soldier',30],['gunner',30],['jeep',14],['heavy',T?18:6],['tank',T>1?6:0]].filter(q=>q[1]>0);let t=rnd(0,pool.reduce((a,q)=>a+q[1],0));for(const [k,w] of pool)if((t-=w)<=0)return k;return 'soldier'}
+function launchRaid(){const tg=A.posts.filter(q=>q.men.length);if(!tg.length)return false;
+  // pick a post, favouring those far from the tank
+  let tot=0;const w=tg.map(q=>{const v=.3+Math.min(1,Math.abs(q.x-A.p.x)/900)*Math.random();tot+=v;return v});let r=rnd(0,tot),post=tg[0];for(let i=0;i<tg.length;i++){if((r-=w[i])<=0){post=tg[i];break}}
+  const n=ROUTE.size[A.tier]+Math.floor(Math.random()*(3+A.tier*2)+Math.min(4,A.time/40)),mode=Math.random();
+  for(let i=0;i<n;i++){let x,y;
+    if(mode<.4){x=post.x+rnd(-220,260);y=14}else if(mode<.75){x=post.x+rnd(-220,260);y=H-14}
+    else if(mode<.9){x=post.x+rnd(-260,260);y=i%3===0?14:H-14}else{x=post.x-rnd(420,560);y=rnd(60,H-60)}
+    x=clamp(x,30,WW-30);const k=raidType(),e=A.mk(k,x,y);if(!E2[k].air&&inWall(x,y))continue;e.awake=true;e.rush=true;e.goal=post;A.enemies.push(e)}
+  post.alarm=6;A.texts.push({x:post.x,y:post.y-46,t:'RAID!',life:2,big:true,col:'#ff4d5e'});
+  if(Math.abs(post.x-A.p.x)>W*.45)toast('Raid on a squad post',`${Math.round(Math.abs(post.x-A.p.x))}m ${post.x<A.p.x?'behind you':'ahead'}`);beep(240,.2,'sawtooth',.05);return true}
 function drawAlly(a){
   ctx.save();ctx.translate(a.x,a.y);
   ctx.fillStyle='rgba(10,40,25,.3)';ctx.beginPath();ctx.ellipse(3,4,10,8,0,0,7);ctx.fill();
   ctx.rotate(a.ang);
   const sw=a.dug?0:Math.sin(a.step)*3;ctx.fillStyle='#1d2f52';ctx.beginPath();ctx.ellipse(sw,-4.5,3,2.2,0,0,7);ctx.ellipse(-sw,4.5,3,2.2,0,0,7);ctx.fill();
+  if(a.emp){ctx.restore();ctx.save();ctx.translate(a.x,a.y);ctx.strokeStyle='#1b2438';ctx.lineWidth=1.5;circ(0,0,10,a.hit>0?'#fff':'#5c6a52',true);ctx.rotate(a.type==='mortar'?-Math.PI/2:a.ang);
+    if(a.type==='mortar'){rr(-4,-4,16,8,3,'#3a4a2e',true);circ(0,0,4,'#ffd27a',true)}else{rr(0,-2.5,22,5,2,'#262c3a',true);rr(-6,-6,12,12,3,'#3f9bff',true)}ctx.restore();
+    if(a.hp<a.max){rr(a.x-12,a.y-19,24,4,2,'rgba(20,24,40,.75)');rr(a.x-12,a.y-19,24*Math.max(0,a.hp)/a.max,4,2,'#4be38f')}return}
   if(a.type==='rpg')rr(-4,2,20,4,2,'#4f6b3a');else rr(2,1.5,a.type==='mg'?16:13,a.type==='mg'?3.5:2.6,1,'#262c3a');
   ctx.strokeStyle='rgba(10,30,70,.5)';ctx.lineWidth=1.5;ctx.fillStyle=a.hit>0?'#fff':'#3f9bff';ctx.beginPath();ctx.ellipse(0,0,6.5,9,0,0,7);ctx.fill();ctx.stroke();
   circ(0,0,5,a.hit>0?'#fff':'#1f6fd6',true);circ(-1.4,-1.6,1.6,'rgba(255,255,255,.55)');
@@ -1301,9 +1350,7 @@ function drawAlly(a){
 }
 
 function spawnRush(){
-  const d=A.M.diff||0,I=A.intensity;
-  const pool=[['soldier',44],['gunner',18],['jeep',d>.05?12:0],['heavy',I>.4?8:0],['tank',d>.3&&I>.55?4:0],['heli',d>.4&&I>.45?5:0]].filter(q=>q[1]>0);
-  let t=rnd(0,pool.reduce((a,q)=>a+q[1],0)),k='soldier';for(const [kk,w] of pool){if((t-=w)<=0){k=kk;break}}
+  const k=enemyType();
   for(let tries=0;tries<10;tries++){let x=Math.min(A.cam+W+rnd(30,150),WW-30),y=rnd(40,H-40);const r0=Math.random();
     if(r0<TUNE.behind[A.tier])x=Math.max(20,A.cam-20);
     else if(r0<TUNE.behind[A.tier]+TUNE.flank[A.tier]){const q=A.posts.length&&Math.random()<.5?A.posts[Math.floor(Math.random()*A.posts.length)]:A.p;x=clamp(q.x+rnd(-260,320),30,WW-30);y=Math.random()<.5?14:H-14;if(dist(x,y,A.p.x,A.p.y)<300)x=clamp(A.p.x+(Math.random()<.5?-1:1)*rnd(300,420),30,WW-30)}
@@ -1350,9 +1397,9 @@ function update2(dt){
     b.x+=b.vx*dt;b.y+=b.vy*dt;
     if(dist(b.x,b.y,b.sx,b.sy)>b.range){b.gone=true;puff(b.x,b.y,'#e9d7a6',2,'dust');continue}
     {const w=wallAt(b.x,b.y);if(w){b.gone=true;puff(b.x,b.y,w.hp?'#e6c07a':'#fff2b0',3,'spark');hitWall(w,b.dmg);continue}}
-    for(const e of A.enemies){if(e.dead)continue;if(dist(b.x,b.y,e.x,e.y)<e.r+b.size){A.hits++;hurt2(e,b.dmg);b.gone=true;puff(b.x,b.y,e.armor>1?'#fff2b0':'#ffd84a',3,'spark');break}}
+    for(const e of A.enemies){if(e.dead)continue;if(dist(b.x,b.y,e.x,e.y)<e.r+b.size){if(b.own)A.hits++;hurt2(e,b.dmg);b.gone=true;puff(b.x,b.y,e.armor>1?'#fff2b0':'#ffd84a',3,'spark');break}}
     if(b.gone)continue;
-    for(const s of A.structs){if(s.dead)continue;if(dist(b.x,b.y,s.x,s.y)<s.r+b.size){A.hits++;hurt2(s,b.dmg);b.gone=true;puff(b.x,b.y,s.kind==='hq'&&hqShielded()?'#c9a8ff':'#fff2b0',3,'spark');break}}
+    for(const s of A.structs){if(s.dead)continue;if(dist(b.x,b.y,s.x,s.y)<s.r+b.size){if(b.own)A.hits++;hurt2(s,b.dmg);b.gone=true;puff(b.x,b.y,s.kind==='hq'&&hqShielded()?'#c9a8ff':'#fff2b0',3,'spark');break}}
     if(b.gone)continue;
     for(const br of A.barrels){if(br.dead||br.fuse)continue;if(dist(b.x,b.y,br.x,br.y)<br.r+b.size){br.hp-=b.dmg;b.gone=true;if(br.hp<=0)br.fuse=.01;break}}
   }
@@ -1379,7 +1426,9 @@ function update2(dt){
     e.hit=Math.max(0,e.hit-dt);e.rot+=dt*30;
     if(!e.awake&&Math.abs(e.x-p.x)<640)e.awake=true;
     if(!e.awake||A.result==='fail')continue;
-    let tg=p,td=dist(e.x,e.y,p.x,p.y);for(const a of A.allies){if(a.dead)continue;const da=dist(e.x,e.y,a.x,a.y);if(da<td-40){td=da;tg=a}}
+    let tg=p,td=dist(e.x,e.y,p.x,p.y);
+    if(e.goal&&e.goal.men.length&&td>170){td=1e9;for(const a of e.goal.men){if(a.dead)continue;const da=dist(e.x,e.y,a.x,a.y);if(da<td){td=da;tg=a}}}
+    else for(const a of A.allies){if(a.dead)continue;const da=dist(e.x,e.y,a.x,a.y);if(da<td-40){td=da;tg=a}}
     const dx=tg.x-e.x,dy=tg.y-e.y,d=Math.hypot(dx,dy)||1;e.ang=Math.atan2(dy,dx);
     const seen=e.air||los(e.x,e.y,tg.x,tg.y);
     let vx,vy;
@@ -1430,12 +1479,15 @@ function update2(dt){
     F.t-=dt;const alive=A.enemies.reduce((n,e)=>n+(!e.dead&&e.awake?1:0),0);
     if(F.t<=0&&alive<(A.camp?TUNE.cap[A.tier]:13)&&F.budget>0){F.t=(TUNE.gap[A.tier]-2.4*A.intensity*(A.tier?1.05:1))*rnd(.7,1.3);const n=Math.min(F.budget,1+Math.floor(Math.random()*(1+A.intensity*2.5)));for(let i=0;i<n;i++){spawnRush();F.budget--}}
     if(A.time-A.lastHit>2.5)p.hp=Math.min(PV.hp,p.hp+PV.hp*.03*(A.U.regen||1)*dt)}
+  A.route=calcRoute();
+  if(A.camp&&!A.result){A.raidT-=dt;if(A.raidT<=0){A.raidT=ROUTE.raid[A.tier]*rnd(.6,1.4);if(A.enemies.reduce((n,e)=>n+(!e.dead&&e.awake?1:0),0)<TUNE.cap[A.tier]+10)launchRaid()}}
   // build site: clear the outposts, then hold the site while the bunker goes up
   if(A.site&&!A.result){const B=A.site,inZone=dist(p.x,p.y,B.x,B.y)<B.r;B.ready=!hqShielded();B.inZone=inZone;
-    if(B.ready&&inZone){if(!B.started){B.started=true;B.wave=0;toast('Building the forward bunker','Keep the area under control · work stops when too many enemies are near');beep(520,.15,'triangle',.05)}
+    if(B.ready&&inZone){if(!B.started){B.started=true;B.wave=0;toast('Building the forward bunker',A.route&&!A.route.ok?'Supply route is cut: close the red gaps with squad posts':'Hold the site and keep the supply route safe');beep(520,.15,'triangle',.05)}
       B.blockers=A.enemies.reduce((n,e)=>n+(!e.dead&&!e.air&&dist(e.x,e.y,B.x,B.y)<B.r?1:0),0);
       B.nearby=A.enemies.reduce((n,e)=>n+(!e.dead&&e.awake&&dist(e.x,e.y,B.x,B.y)<420?1:0),0);
-      if(B.nearby<TUNE.near)B.prog=Math.min(1,B.prog+dt/TUNE.build/(1+.5*B.blockers));
+      B.cut=A.route&&!A.route.ok;
+      if(B.nearby<TUNE.near&&!B.cut)B.prog=Math.min(1,B.prog+dt/TUNE.build/(1+.5*B.blockers));
       if(B.prog>=1){A.result='win';A.endT=2.2;A.flash=.35;toast('Forward bunker built',A.camp?'Region captured':'Mission complete');beep(660,.15,'triangle',.06);setTimeout(()=>beep(990,.2,'triangle',.06),130)}}
     if(B.started&&B.wave>0&&!A.result){B.waveT-=dt;if(B.waveT<=0){B.waveT=rnd(.8,1.4);const n=Math.min(B.wave,B.prog>.5?2:1);for(let i=0;i<n;i++){spawnRush();B.wave--}}}}
   // enemy shots
@@ -1486,7 +1538,7 @@ function updHud2(){
   $('credits').textContent=`${A.reserve} soldiers ready · ${A.credits} cr`;
   const tl=towersLeft(),dl=depotsLeft(),hq=HQ(),B=A.site;
   $('objList').innerHTML=`<li class="${tl?'':'done'}">Gun towers ${A.nT-tl}/${A.nT}</li><li class="${dl?'':'done'}">Ammo depots ${A.nD-dl}/${A.nD}</li>`+
-    (B?`<li class="${B.prog>=1?'done':B.ready?'':'lock'}">Build forward bunker ${Math.round(B.prog*100)}%</li>`:`<li class="${hq.dead?'done':hqShielded()?'lock':''}">Command HQ${hqShielded()?' (shielded)':''}</li>`);
+    (B&&A.route?`<li class="${A.route.ok?'done':''}">Supply route ${A.route.links.length-A.route.bad}/${A.route.links.length} safe</li>`:'')+(B?`<li class="${B.prog>=1?'done':B.ready?'':'lock'}">Build forward bunker ${Math.round(B.prog*100)}%</li>`:`<li class="${hq.dead?'done':hqShielded()?'lock':''}">Command HQ${hqShielded()?' (shielded)':''}</li>`);
   setAct2('canBtn2',A.canT,PV.can.cd,'CANNON');setAct2('misBtn2',A.misT,PV.mis.cd,'MISSILES');
   {const b=$('postBtn2'),ok=A.posts.length<(A.maxPosts||TUNE.maxPosts)&&A.reserve>=2;b.classList.toggle('ready',ok);b.classList.toggle('locked',A.posts.length>=(A.maxPosts||TUNE.maxPosts));b.style.setProperty('--p',Math.min(100,A.reserve/2*100)+'%');b.querySelector('b').textContent=`POST ${(A.maxPosts||TUNE.maxPosts)-A.posts.length} LEFT`}
 }
@@ -1509,6 +1561,7 @@ function draw2(){
     ctx.strokeStyle='#8a1c2c';ctx.lineWidth=2;circ(b.x,b.y,b.r,'#ff4d5e',true);circ(b.x,b.y,b.r*.6,'#e0304a');ctx.fillStyle='#ffd25a';ctx.beginPath();ctx.moveTo(b.x,b.y-5);ctx.lineTo(b.x+4.5,b.y+3);ctx.lineTo(b.x-4.5,b.y+3);ctx.fill();
     if(b.fuse){ctx.globalCompositeOperation='lighter';drawGlow('#ffb84a',b.x,b.y,20);ctx.globalCompositeOperation='source-over'}}
   for(const w of A.walls)if(w.x+w.w>cam-20&&w.x<cam+W+20)drawWall(w);
+  drawRoute(vis);
   if(A.site&&vis(A.site.x,200))drawSite();
   for(const s of A.structs)if(vis(s.x,120))drawStruct(s);
   for(const e of A.enemies)if(!e.dead&&!e.air&&vis(e.x))drawEnemy(e);
@@ -1632,9 +1685,28 @@ function drawIndicators(){
     ctx.save();ctx.translate(x,y);ctx.fillStyle='rgba(12,20,40,.65)';circ(0,0,15,'rgba(12,20,40,.65)');
     ctx.fillStyle=col;ctx.beginPath();const d=right?1:-1;ctx.moveTo(10*d,0);ctx.lineTo(-4*d,-8);ctx.lineTo(-4*d,8);ctx.fill();
     ctx.font='700 9px Rubik,system-ui';ctx.textAlign='center';ctx.fillStyle='#fff';ctx.fillText(Math.round(Math.abs(s.x-A.p.x))+'m',0,26);ctx.restore()}
+  for(const q of A.posts){if(!(q.alarm>0))continue;const sx=q.x-cam;if(sx>-10&&sx<W+10)continue;const right=sx>=W,x=right?W-22:22;let y=clamp(q.y,150,H-130);
+    while(used.some(u=>u.r===right&&Math.abs(u.y-y)<42))y+=42;used.push({r:right,y});const fl=.6+.4*Math.sin(now/120);
+    ctx.save();ctx.translate(x,y);circ(0,0,16,`rgba(255,77,94,${.55*fl})`);ctx.fillStyle='#fff';ctx.beginPath();const d=right?1:-1;ctx.moveTo(10*d,0);ctx.lineTo(-4*d,-8);ctx.lineTo(-4*d,8);ctx.fill();
+    ctx.font='800 9px Rubik,system-ui';ctx.textAlign='center';ctx.fillStyle='#ffd0d5';ctx.fillText('POST',0,27);ctx.restore()}
   if(A.site&&A.site.x-cam>W+10){let y=200;while(used.some(u=>u.r&&Math.abs(u.y-y)<42))y+=42;ctx.save();ctx.translate(W-22,y);circ(0,0,15,'rgba(12,20,40,.65)');
     ctx.fillStyle=A.site.ready?'#36b9ff':'#c3d0ea';ctx.fillRect(-6,-6,12,12);ctx.font='700 9px Rubik,system-ui';ctx.textAlign='center';ctx.fillStyle='#fff';ctx.fillText(Math.round(A.site.x-A.p.x)+'m',0,26);ctx.restore()}
 }
+function drawRoute(vis){const R=A.route;
+  if(vis(A.base.x,120)){const x=A.base.x,y=A.base.y;sandbags(x,y,40,16);ctx.strokeStyle='#2b3240';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(x,y+10);ctx.lineTo(x,y-48);ctx.stroke();
+    ctx.fillStyle='#4be38f';ctx.beginPath();ctx.moveTo(x,y-48);ctx.lineTo(x+26,y-40);ctx.lineTo(x,y-32);ctx.fill();ctx.font='800 11px Rubik,system-ui';ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='rgba(20,24,40,.8)';ctx.strokeText('SUPPLY BASE',x,y+42);ctx.fillStyle='#bff5d6';ctx.fillText('SUPPLY BASE',x,y+42)}
+  for(const q of A.ruins)if(vis(q.x)){ctx.globalAlpha=.4;sandbags(q.x,q.y,q.r,14);ctx.globalAlpha=1}
+  if(!R)return;const fl=.5+.5*Math.sin(now/160);
+  ctx.save();ctx.lineCap='round';
+  for(const l of R.links){if(!vis(l.a.x,600)&&!vis(l.b.x,600))continue;
+    ctx.setLineDash(l.ok?[14,10]:[8,10]);ctx.lineDashOffset=-now/40;ctx.lineWidth=l.ok?4:5;ctx.strokeStyle=l.ok?'rgba(75,227,143,.75)':`rgba(255,77,94,${.5+.45*fl})`;
+    ctx.beginPath();ctx.moveTo(l.a.x,l.a.y);ctx.lineTo(l.b.x,l.b.y);ctx.stroke();
+    if(!l.ok){const mx=(l.a.x+l.b.x)/2,my=(l.a.y+l.b.y)/2;ctx.setLineDash([]);ctx.font='800 11px Rubik,system-ui';ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='rgba(20,24,40,.8)';
+      const t=`GAP ${Math.round(dist(l.a.x,l.a.y,l.b.x,l.b.y))}m · POST NEEDED`;ctx.strokeText(t,mx,my-12);ctx.fillStyle='#ffb3bb';ctx.fillText(t,mx,my-12)}}
+  ctx.setLineDash([]);
+  for(const q of A.posts)if(vis(q.x,R.L)&&q.x<(A.site?A.site.x:1e9)){ctx.strokeStyle='rgba(75,227,143,.18)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(q.x,q.y,R.L/2,0,7);ctx.stroke()}
+  for(const q of A.posts)if(q.alarm>0&&vis(q.x)){ctx.strokeStyle=`rgba(255,77,94,${.4+.5*fl})`;ctx.lineWidth=3;ctx.beginPath();ctx.arc(q.x,q.y,q.r+12+fl*4,0,7);ctx.stroke()}
+  ctx.restore()}
 function drawSite(){
   const B=A.site;if(!B)return;const x=B.x,y=B.y;
   ctx.save();ctx.setLineDash([12,8]);ctx.lineDashOffset=-now/50;ctx.strokeStyle=B.ready?'rgba(54,185,255,.95)':'rgba(255,255,255,.55)';ctx.lineWidth=3;ctx.beginPath();ctx.arc(x,y,B.r,0,7);ctx.stroke();ctx.restore();
@@ -1644,7 +1716,7 @@ function drawSite(){
   ctx.strokeStyle='#4f5d72';ctx.lineWidth=4;ctx.stroke();ctx.strokeStyle='#36b9ff';ctx.lineWidth=3;ctx.beginPath();ctx.arc(x,y,32,0,7);ctx.stroke();ctx.globalAlpha=1;
   if(B.prog<1){ctx.strokeStyle='rgba(255,201,60,.85)';ctx.lineWidth=2;for(let i=-40;i<=40;i+=20){ctx.beginPath();ctx.moveTo(x+i,y-48);ctx.lineTo(x+i,y+48);ctx.stroke()}ctx.beginPath();ctx.moveTo(x-48,y);ctx.lineTo(x+48,y);ctx.stroke()}
   ctx.strokeStyle='#2b3240';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(x+56,y-20);ctx.lineTo(x+56,y-74);ctx.stroke();ctx.fillStyle='#2f8cff';ctx.beginPath();ctx.moveTo(x+56,y-74);ctx.lineTo(x+86,y-64);ctx.lineTo(x+56,y-54);ctx.fill();
-  const label=B.prog>=1?'FORWARD BUNKER':B.started?`BUILDING ${Math.round(B.prog*100)}%${!B.inZone?' · RETURN TO SITE':B.nearby>=TUNE.near?' · STOPPED: ENEMY TOO CLOSE':B.blockers?' · CLEAR THE SITE':''}`:B.ready?'BUILD SITE · DRIVE IN':'BUILD SITE · CLEAR OUTPOSTS FIRST';
+  const label=B.prog>=1?'FORWARD BUNKER':B.started?`BUILDING ${Math.round(B.prog*100)}%${!B.inZone?' · RETURN TO SITE':B.cut?' · STOPPED: SUPPLY ROUTE CUT':B.nearby>=TUNE.near?' · STOPPED: ENEMY TOO CLOSE':B.blockers?' · CLEAR THE SITE':''}`:B.ready?'BUILD SITE · DRIVE IN':'BUILD SITE · CLEAR OUTPOSTS FIRST';
   ctx.font='800 12px Rubik,system-ui';ctx.textAlign='center';ctx.lineJoin='round';ctx.lineWidth=3.5;ctx.strokeStyle='rgba(20,24,40,.8)';ctx.strokeText(label,x,y-B.r-16);ctx.fillStyle=B.ready?'#bfe6ff':'#fff';ctx.fillText(label,x,y-B.r-16);
 }
 function drawMinimap(){
@@ -1654,6 +1726,8 @@ function drawMinimap(){
   ctx.fillStyle='rgba(255,255,255,.22)';ctx.fillRect(x0+A.cam*k,y0,W*k,14);
   for(const e of A.enemies)if(!e.dead)circ(x0+e.x*k,y0+e.y/H*14,1.3,'#ff6b78');
   for(const s of A.structs){if(s.dead)continue;circ(x0+s.x*k,y0+7,s.kind==='hq'?5:3.6,s.kind==='tower'?'#ff8a3d':s.kind==='depot'?'#ffc93c':(hqShielded()?'#a86bff':'#ff4d5e'))}
+  if(A.route)for(const l of A.route.links){ctx.fillStyle=l.ok?'rgba(75,227,143,.85)':(Math.sin(now/150)>0?'#ff4d5e':'rgba(255,77,94,.4)');ctx.fillRect(x0+l.a.x*k,y0+12,(l.b.x-l.a.x)*k,3)}
+  for(const q of A.posts)circ(x0+q.x*k,y0+7,2.8,q.alarm>0&&Math.sin(now/120)>0?'#ff4d5e':'#4be38f');
   if(A.site){ctx.fillStyle=A.site.ready?'#36b9ff':'rgba(255,255,255,.7)';ctx.fillRect(x0+A.site.x*k-4,y0+3,8,8)}
   ctx.strokeStyle='#fff';ctx.lineWidth=1.5;circ(x0+A.p.x*k,y0+A.p.y/H*14,4,'#36b9ff',true);
 }
@@ -1797,7 +1871,7 @@ function startCampaign(fresh){
     toastQ=[];toast(s?'Campaign resumed':'Conquest',s?`${owned()} of ${NREG} regions held`:'Capture all 100 regions');
   },40);
 }
-function enterMap(){MV.anim=null;
+function enterMap(){MV.anim=null;$('exitBtn').hidden=false;
   mode=3;S.running=false;A.running=false;C.running=true;C.paused=false;
   $('hud1').hidden=true;$('hud2').hidden=true;$('hud3').hidden=false;
   for(const id of['startMenu','overMenu','winMenu','failMenu','pauseMenu','campEnd'])$(id).hidden=true;
@@ -1843,7 +1917,7 @@ function startBattle(kind,id){
   if(kind==='defend'){
     const fl=regionFlavor(reg);buildGround(T,fl.l1);setWeather(fl.wx);mode=1;A.running=false;$('hud1').hidden=false;$('hud2').hidden=true;toastQ=[];
     reset({name:reg.name,label:T.label,stage:st,wave0:Math.max(1,Math.round(st*.45+Math.max(0,st-10)*.3+reg.diff*2.5)),layout:regionFlavor(reg).l1,fortBonus:(C.built[id]?1:0)+(C.bank.id===id?BANKS[C.bank.lvl].fort:0),bank:C.bank.id===id?{lvl:C.bank.lvl,money:C.money}:null,waves:3,ease:Math.max(.55,1-.15*(C.lossStreak||0))});
-    {const fl=regionFlavor(reg);toast('Defend '+reg.name,`${T.label} · ${LAYOUT1[fl.l1.kind]} · ${WXNAME[fl.wx]}`);toast('Survive 3 waves',C.bank.id===id?`Your treasury is here: ${fmtCr(C.money)} at stake`:C.built[id]?'Your forward bunker holds this region':'')}
+    {const fl=regionFlavor(reg);toast('Defend '+reg.name,`${T.label} · ${LAYOUT1[fl.l1.kind]} · ${WXNAME[fl.wx]}`);toast('Destroy every attacker',C.bank.id===id?`Your treasury is here: ${fmtCr(C.money)} at stake`:C.built[id]?'Your forward bunker holds this region':'')}
   }else{
     {const fl=regionFlavor(reg);startAssault({map:genAssault(reg,k,fl.l2),terrain:reg.terrain,k,name:reg.name,weather:fl.wx})}
   }
@@ -1904,10 +1978,13 @@ const UPG=[
  ['sq','sdmg','Squad weapons','squad soldier damage',.04,12,280],
  ['sq','sres','Reinforcements','+1 soldier ready at the start',1,4,2000],
  ['sq','spost','Engineers','+1 squad post per battle',1,2,5000],
+ ['sq','phmg','Post machine gun','heavy MG nest in every post, then stronger',1,5,1500],
+ ['sq','pmortar','Post mortar','mortar in every post, then stronger',1,5,2500],
+ ['sq','pwall','Sandbag walls','damage post soldiers take',-.04,10,300],
  ['amm','ap','AP rounds','enemy armor stops less damage',-.06,8,600],
  ['amm','bounty','Bounty contracts','more pay for every kill',.03,10,800],
 ];
-const UPCAT=[['gun','Machine gun'],['can','Cannon'],['mis','Missiles'],['arm','Armor'],['sq','Squads'],['amm','Ammo & pay']];
+const UPCAT=[['gun','Machine gun'],['can','Cannon'],['mis','Missiles'],['arm','Armor'],['sq','Squads & posts'],['amm','Ammo & pay']];
 const UPI=Object.fromEntries(UPG.map(u=>[u[1],u]));
 const lvlOf=id=>(C&&C.up&&C.up[id])||0;
 const isAdd=u=>Number.isInteger(u[4]);
@@ -1952,13 +2029,16 @@ function upIcon(u,L){const cat=u[0],id=u[1],mx=u[5],t=Math.min(3,Math.floor(L*4/
   else if(cat==='mis'){const n=id==='msalvo'?Math.min(4,L+1):[1,1,2,3][t],h=Math.min(9,26/n);for(let i=0;i<n;i++){const y=24+(i-(n-1)/2)*h*1.15;
      g+=`<path ${st} d="M8 ${y-h/2}h24l10 ${h/2}-10 ${h/2}H8l-4 ${h*.35}V${y-h*.85}z"/>`}}
   else if(cat==='arm'){g=`<path ${st} d="M24 5l15 5v11c0 10-7 16-15 21-8-5-15-11-15-21V10z"/>`+(t>=1?`<path fill="none" stroke="${k}" stroke-width="1.4" d="M24 11l10 3.5v7c0 7-5 11-10 14.5-5-3.5-10-7.5-10-14.5v-7z"/>`:'')+(t>=2?`<path fill="${k}" d="M24 17v14M17 24h14" stroke="${k}" stroke-width="2"/>`:'')+(t>=3?`<circle fill="#fff" cx="15" cy="13" r="1.6"/><circle fill="#fff" cx="33" cy="13" r="1.6"/>`:'')}
+  else if(id==='phmg'||id==='pmortar'||id==='pwall'){const sb=(x,y)=>`<rect ${st} x="${x}" y="${y}" width="12" height="6" rx="3"/>`;
+     if(id==='pwall'){const n=1+t*2;for(let i=0;i<n;i++)g+=sb(6+(i%3)*12+(Math.floor(i/3)%2)*6,38-Math.floor(i/3)*7)}
+     else{g=sb(6,34)+sb(18,34)+sb(30,34)+(id==='phmg'?`<path ${st} d="M16 33l4-8M30 33l-4-8"/><rect ${st} x="12" y="18" width="${22+t*4}" height="5" rx="2"/><rect ${st} x="14" y="14" width="10" height="10" rx="3"/>`:`<rect ${st} x="18" y="${12-t}" width="${8+t}" height="${22+t}" rx="3" transform="rotate(20 22 24)"/><circle ${st} cx="22" cy="33" r="3"/>`)}}
   else if(cat==='sq'){const n=id==='sres'?Math.max(1,L):id==='spost'?1+L:1;
      if(id==='spost'){for(let i=0;i<n;i++)g+=`<rect ${st} x="${8+i*11}" y="${30-(i%2)*7}" width="12" height="7" rx="3.5"/>`;g+=`<circle ${st} cx="24" cy="16" r="6"/>`}
      else if(n>1){for(let i=0;i<Math.min(4,n);i++){const x=10+i*9;g+=`<path ${st} d="M${x-6} 30c0-6 3-9 6-9s6 3 6 9z"/><rect ${st} x="${x-7}" y="30" width="14" height="3" rx="1"/>`}}
      else{g=`<path ${st} d="M10 28c0-9 6-15 14-15s14 6 14 15z"/><rect ${st} x="6" y="28" width="36" height="4" rx="2"/>`+(t>=1?`<path fill="none" stroke="${k}" stroke-width="1.6" d="M12 32c2 6 6 8 12 8s10-2 12-8"/>`:'')+(t>=2?`<rect fill="${k}" x="15" y="22" width="18" height="4" rx="2"/>`:'')+(t>=3?`<path fill="#fff" stroke="${k}" d="M24 14l1.6 3.4 3.6.4-2.7 2.4.8 3.6-3.3-1.9-3.3 1.9.8-3.6-2.7-2.4 3.6-.4z"/>`:'')}}
   else if(id==='ap'){const n=1+Math.min(2,t);for(let i=0;i<n;i++){const x=24+(i-(n-1)/2)*11;g+=`<path ${st} d="M${x-4} 40V22c0-${6+t*2} 4-${12+t*2} 4-${12+t*2}s4 ${6+t*2} 4 ${12+t*2}v18z"/><rect fill="${k}" x="${x-4}" y="33" width="8" height="2"/>`}}
   else{const n=2+t*2;for(let i=0;i<n;i++)g+=`<ellipse ${st} cx="${24+(i%2?3:-3)}" cy="${38-i*4}" rx="12" ry="4"/>`;g+=`<text x="24" y="${38-(n-1)*4+3}" font-size="7" font-weight="900" text-anchor="middle" fill="${k}">$</text>`}
-  const B={gdmg:'up',grate:'fast',grng:'aim',gacc:'aim',gcool:'snow',gturn:'rot',cdmg:'up',csplash:'star',ccd:'clock',mdmg:'up',mcd:'clock',msalvo:'plus',hp:'up',guard:'down',regen:'plus',shp:'plus',sdmg:'up'}[id];
+  const B={phmg:'up',pmortar:'up',pwall:'down',gdmg:'up',grate:'fast',grng:'aim',gacc:'aim',gcool:'snow',gturn:'rot',cdmg:'up',csplash:'star',ccd:'clock',mdmg:'up',mcd:'clock',msalvo:'plus',hp:'up',guard:'down',regen:'plus',shp:'plus',sdmg:'up'}[id];
   const bp={up:'M38 32.5l4.5 5h-3v4.5h-3v-4.5h-3z',down:'M38 43.5l4.5-5h-3V34h-3v4.5h-3z',plus:'M38 33v10M33 38h10',fast:'M33.5 34l4 4-4 4M38.5 34l4 4-4 4',aim:'M38 32.5v11M32.5 38h11M38 34.5a3.5 3.5 0 1 0 .01 0',
     snow:'M38 32.5v11M33.2 35.2l9.6 5.6M33.2 40.8l9.6-5.6',rot:'M42 38a4 4 0 1 1-1.2-2.9M42 33.5v2.5h-2.5',clock:'M38 33.5a4.5 4.5 0 1 0 .01 0M38 35.5v3l2 1.5',star:'M38 32.5l1.6 3.6 3.9-.6-2.4 3 2.4 3-3.9-.6-1.6 3.6-1.6-3.6-3.9.6 2.4-3-2.4-3 3.9.6z'}[B];
   const badge=B?`<circle cx="38" cy="38" r="8" fill="${k}" stroke="${c}" stroke-width="1.5"/><path d="${bp}" fill="${B==='up'||B==='down'||B==='star'?'#fff':'none'}" stroke="#fff" stroke-width="${B==='up'||B==='down'||B==='star'?0:1.8}" stroke-linecap="round" stroke-linejoin="round"/>`:'';
@@ -2145,10 +2225,12 @@ function genAssault(reg,k,layout){
 // ---------- loop ----------
 reset();S.running=false;S.waveLeft=0;toastQ=[];$('toast').classList.remove('show');/*DBG*/
 let last=performance.now();
+let exitShown=null;
 function loop(t){
   requestAnimationFrame(loop);
   try{
   const dt=Math.min(.05,(t-last)/1000);last=t;now=t;frameDt=dt;
+  {const ex=mode!==0&&$('startMenu').hidden;if(ex!==exitShown){exitShown=ex;$('exitBtn').hidden=!ex}}
   if(mode===2){if(A.running&&!A.paused)update2(dt);draw2()}
   else if(mode===3){if(C.running&&!C.paused)update3(dt);draw3()}
   else{if(live())update(dt);draw()}
